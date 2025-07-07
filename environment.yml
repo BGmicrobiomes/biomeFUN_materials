@@ -1,0 +1,17 @@
+name: networks
+channels:
+  - conda-forge
+dependencies:
+  - seaborn
+  - ipython
+  - pandas
+  - numpy
+  - scipy
+  - matplotlib
+  - networkx
+  - jupyter_core
+  - notebook
+  - python-igraph
+  - pycairo
+  - cairocffi
+  - numba
