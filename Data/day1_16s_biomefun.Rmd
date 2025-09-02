@@ -1,0 +1,1211 @@
+---
+title: "BiomeFun 2025"
+subtitle:  "Microbial community analysis using amplicon sequencing"
+author: "Milan Dragićević$^1$ and Alfonso Esposito$^2$"
+output:
+  html_document:
+    code_folding: show
+date: "2025-09-15"
+---
+$^1$Senior AI solutions developer, Parexel
+<br>
+$^2$Associate Professor, The University of Verona
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache=TRUE, results='hide')
+unlink("fastq/cutadapt", recursive = TRUE)
+unlink("fastq/filtered", recursive = TRUE)
+```
+
+## Amplicon sequencing for microbial community analysis
+
+The fundamental principle of amplicon sequencing for microbial community analysis is to target a specific, short, and conserved genetic region that is present in most (or all) members of the microbial group of interest (e.g., bacteria, fungi, archaea). This region also needs to contain enough variation to distinguish different species or even strains.
+
+For bacteria and archaea, the most common target is the 16S ribosomal RNA (rRNA) gene. For fungi, it's often the Internal Transcribed Spacer (ITS) region. These genes are chosen because:
+
+  * **Universal Presence**: Found in almost all organisms within their respective domains.
+  * **Conserved Regions**: Have stretches of DNA that are very similar across diverse taxa, allowing "universal" primers to bind.
+  * **Hypervariable Regions**: Interspersed within these conserved regions are "hypervariable regions" (e.g., V1-V9 for 16S rRNA gene). These are regions that evolve more rapidly and thus contain sequence differences that allow for taxonomic differentiation.
+
+The Illumina MiSeq system has been, and largely remains, the most common and widely used platform for amplicon sequencing in microbial community analysis, particularly for 16S rRNA gene sequencing:
+
+  * **Read Length and Overlap:**: The MiSeq can generate 2 x 300 bp paired-end reads. This is crucial for amplicon sequencing (e.g., of the 16S rRNA V4 region, which is ~250-280 bp, or V3-V4 which is ~460 bp). The 2x300 bp reads allow for sufficient overlap between the forward and reverse reads for common amplicon targets. This overlap is essential for creating a single, high-quality full-length amplicon sequence.
+  * **Throughput (Number of Reads):**: The MiSeq offers a good balance of throughput for typical amplicon sequencing projects. It can generate millions of reads per run (up to 25 million reads with the v3 chemistry). This throughput is sufficient to get deep sequencing coverage for a reasonable number of samples (e.g., 96-384 samples with adequate read depth per sample), making it suitable for many ecological and clinical studies.
+  * **Accuracy**: Illumina's sequencing-by-synthesis (SBS) chemistry is known for its high accuracy, especially for substitution errors.
+ 
+
+## Pros and Cons of amplicon variant sequencing using MiSeq
+
+### Pros
+
+* **Ease of Use**: Method is relatively easy to perform with well-established protocols.
+  
+* **Cost-Effectiveness**: Highly cost-effective for multiplexed targeted sequencing applications (e.g., 16S rRNA gene sequencing) due to high throughput.
+  
+* **High Throughput for Targeted Sequencing**: Capable of generating a large number of reads suitable for analyzing many samples simultaneously in amplicon-based studies.
+  
+* **Straightforward Analysis for Standard Applications**: Well-developed bioinformatics pipelines and tools are available for common applications like 16S amplicon analysis.
+
+* **High Accuracy (Low Raw Error Rate)**: Illumina chemistry generally provides a low raw sequencing error rate.
+
+* **Robust Ecosystem and Community Support**: Large user base, extensive documentation, and readily available bioinformatics tools and resources.
+
+* **Relatively Fast Turnaround**: Offers quicker run times compared to higher-throughput sequencers, suitable for moderate-sized projects.
+</details> 
+
+### Cons
+
+* **Limited Resolution for Taxa Identification**: In amplicon sequencing, taxonomic assignment is based on a short, single sequence region, limiting resolution, especially at the species or strain level. This is true for amplicon sequencing in general.
+
+* **Inherent Biases in PCR-Based Workflows**:
+	* **DNA Extraction Efficiency**: Variations in DNA extraction efficiency across different organisms can bias the initial DNA pool.
+	* **PCR Amplification Bias**: PCR primers may not amplify all sequence variants with the same efficiency, leading to an inaccurate representation of relative abundances.
+	* **Chimeric Sequences**: PCR can generate artificial sequences (chimeras) that need to be identified and removed during analysis.
+	
+	
+* **Impact of Sequencing Errors**: While low, sequencing errors are not perfectly constant and can still lead to overestimation of diversity if not properly mitigated by denoising algorithms.	
+  
+* **Assumptions Regarding Quantitative Accuracy**:
+	* **Assumes a linear dependency between sequence variants and true population size**, which is often challenged by the aforementioned biases.
+	* **Assumes similar linear dependency across all taxa**, which may not hold true.
+	
+	
+* **Limited Read Length**: Max read lengths (2x300 bp)
+* **Consumable Costs (when analyzing few samples)**: The cost of a MiSeq reagent kit can be substantial for very low-throughput projects, making it less economical in such scenarios.
+* **Requires Bioinformatics Expertise**: Despite straightforward pipelines, interpreting complex biological data and troubleshooting still demands significant bioinformatics knowledge.
+
+	
+## The experimental workflow
+<details>
+<summary style="font-size: 1.2em; font-weight: bold; cursor: pointer; color: #337ab7;">Phase 1: Sample Collection and DNA Extraction</summary>
+
+* **Sample Collection**
+
+* **DNA Extraction**: This step is critical as it influences the diversity and quantity of DNA obtained and can be source-dependent (e.g., specific kits for soil vs. stool).
+
+* **Quality Control**: Assess DNA quantity (e.g., Qubit, NanoDrop) and integrity (e.g., gel electrophoresis) to ensure sufficient and high-quality input for downstream steps.
+</details> 
+
+<details>
+<summary style="font-size: 1.2em; font-weight: bold; cursor: pointer; color: #337ab7;">Phase 2: PCR Amplification of 16S rRNA Gene</summary>
+
+* **Primer Design/Selection**: Choose appropriate 16S rRNA gene region-specific primers (e.g., V3-V4, V4, V1-V2) that are suitable for the target microbial community and sequencing platform.
+
+* **PCR Amplification (First Round)**: Perform PCR to amplify the target 16S rRNA gene region from the extracted DNA. This step uses primers that bind to conserved regions flanking the variable region of interest.
+
+* **PCR Product Cleanup**: Purify the PCR products to remove unligated primers, nucleotides, and enzymes. This is often done using magnetic beads (e.g., AMPure XP) or gel extraction.
+
+* **Quality Control**: Verify amplicon size and presence using gel electrophoresis or a bioanalyzer/TapeStation. Quantify purified PCR products.
+</details> 
+
+<details>
+<summary style="font-size: 1.2em; font-weight: bold; cursor: pointer; color: #337ab7;">Phase 3: Library Preparation (Adding Adapters and Indices)</summary>
+* **Index PCR (Second Round PCR)**: Second PCR step is performed using primers that incorporate:
+  * **Illumina Sequencing Adapters**: Sequences required for binding to the flow cell.
+  * **Dual Indices (Barcodes)**: Unique DNA sequences that allow multiple samples to be pooled and sequenced together on a single run (multiplexing). These indices are read during the sequencing process to demultiplex the data later.
+
+
+* **Library Cleanup**: Purify the indexed PCR products again to remove excess primers, primer-dimers, and short fragments.
+
+* **Library Quantification and Quality Control**:
+  * **Quantification**: Accurately quantify the final libraries (e.g., Qubit, qPCR for library quantification). This is crucial for pooling.
+  * **Size Distribution Assessment**: Check the size distribution of the libraries using a bioanalyzer, TapeStation, or Fragment Analyzer to ensure they are within the expected range (amplicon size + adapter length).
+</details>
+
+<details>
+<summary style="font-size: 1.2em; font-weight: bold; cursor: pointer; color: #337ab7;">Phase 4: MiSeq Sequencing</summary>
+* **Library Pooling**: Based on the quantification results, pool equimolar amounts of the barcoded libraries. This ensures an even representation of samples on the sequencing run.
+
+* **Denaturation and Dilution**: Denature the pooled libraries into single strands and dilute them to the appropriate loading concentration for the MiSeq flow cell.
+
+* **Sequencing Run**: Initiate the sequencing run on the MiSeq instrument. The instrument performs bridge amplification on the flow cell, followed by sequencing-by-synthesis, generating millions of reads.
+</details>
+	
+<details>
+<summary style="font-size: 1.2em; font-weight: bold; cursor: pointer; color: #337ab7;">Phase 5: Data Output and Initial Processing</summary>
+* **Raw Data Generation**: The MiSeq instrument generates raw sequencing data in BCL (Base Call) files.
+
+* **BCL to FASTQ Conversion (Demultiplexing)**: Illumina's instrument control software (or a separate utility like bcl2fastq/dragen) processes the BCL files. This step performs base calling which converts the fluorescent signals into base calls (A, T, C, G).
+
+* **Quality Scoring**: Assigns a quality score (Phred score) to each base call.
+
+* **Demultiplexing**: Reads the unique index sequences for each cluster and separates the reads originating from different samples into individual files.
+
+* **FASTQ File Output**: The final output of the sequencing run for each sample consists of FASTQ files. Each FASTQ file contains the raw sequence reads and their corresponding quality scores. Typically, you'll get two FASTQ files per sample (forward and reverse reads for paired-end sequencing).
+</details>
+
+### But what is a FASTQ file?
+
+```
+@M03461:328:000000000-JLTJF:1:1101:8238:1893 1:N:0:38
+TACGGGAGGCAGCAGTGGGGAATATTTGACAATGGGCGAAAGCCTGATCCAGCCATGCCGCATGTGTGAAGAAGGCCTTTGGGTTGTAAAGCTCTTTTAGTTAGGAAGATAAT
++
+AACCCE7@CFGGEDGG<8,+--C,CF,;,@<-C9--@+++++;;E,,CCE9,6@,C8<C@B+B,,,<,,,,,,,,69EEF9,,BB+B,,6,6:CEFFF9,C,,,4,,,,C,5B
+```
+* **Line 1**: Read sequence identifier (encoded descriptions of instrument, lane…)
+* **Line 2**: Read sequence
+* **Line 3**: « + » sign (can be followed by seq identifier)
+* **Line 4**: ASCII characters denoting the quality score associated to each Read
+* The method of encoding quality scores:
+  * Phred+33: Sanger 
+  * Phred+64: Illumina 1.8+ 
+
+<details>
+<summary style="font-size: 1.2em; font-weight: bold; cursor: pointer; color: #337ab7;">Quality score encoding</summary>
+* Quality score can be used to describe the chance that a call was correct (confidence) or the chance that a call was incorrect (probability of error).
+* Illumina reads will often assign a maximum per-base confidence of 99.99%, or 1/10,000 probability of error.
+* PacBio reading in high-confidence mode, can assign even higher confidence to individual bases due to the PacBio’s ability to read a given sequence several times to ensure correctness. 
+* Keeping such large numbers with sequencing data would require a significantly larger amount of storage than necessary, so an encoding scheme is used for compression. 
+* Encoding is designed to lead to loss of fine detail at the very high-confidence end of the spectrum, with much less loss at the low-confidence end. Difference between a 1/10,000 chance of error and a 1/9500 chance of error is considered trivial; Difference between a 1/100 chance of error and a 1/10 chance of error is of great importance.
+* Phred is the most common encoding scheme:
+<center>
+$-10 \log_{10} P$, where $P$ is the estimated probability of the base call being incorrect.
+</center>
+
+```{r phread, cache = FALSE, echo = TRUE, height = 6, width = 6, collapse=TRUE}
+library(ggplot2)
+# 1. Define a range of probabilities of incorrect base calls (P)
+# We'll use a sequence from a very small number (close to 0) to 1.
+# Using a log-scale for P to get a good distribution for Phred scores.
+p_values <- c(10^seq(-4, 0, length.out = 100)) # From 0.0001 to 1
+
+# 2. Calculate the corresponding Phred scores (Q)
+# For P=0, Q would theoretically be infinity, but practically Phred scores are finite.
+q_values <- -10 * log10(p_values)
+
+# 3. Calculate the corresponding probabilities of correct base calls (1-P)
+p_correct <- 1 - p_values
+
+# 4. Create a data frame with these values
+phred_data <- data.frame(
+  p_error = p_values,
+  p_correct = p_correct,
+  phred_score = q_values
+)
+
+# 5. Use ggplot2 to plot Phred score against the probability of incorrect base call
+ggplot(phred_data, aes(x =  p_error, y = phred_score)) +
+  # Add a line plot
+  geom_line(color = "steelblue", size = 1.2) +
+  labs(
+    title = "Dependency of Phred Score on Probability of Error",
+    x = "Probability of Incorrect Base Cal",
+    y = "Phred Score"
+  ) +
+  scale_x_continuous(
+    limits = c(0, 1),
+    breaks = c(0,  0.1, 0.2, 0.4, 0.6, 0.8, 1.0), 
+    labels = scales::percent_format(accuracy = 0.01) # Format x-axis as percentages
+  ) +
+  scale_y_continuous(
+    limits = c(0, 40), # Common range for Phred scores
+    breaks = seq(0, 40, by = 5)
+  ) +
+  theme_minimal() + # Use a minimal theme for a clean look
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    axis.title.x = element_text(size = 12, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 12, margin = margin(r = 10)),
+    axis.text = element_text(size = 10),
+    panel.grid.major = element_line(color = "grey90", linetype = "dashed"),
+    panel.grid.minor = element_blank() # Remove minor grid lines
+  ) +
+  # Add annotations for key Phred scores, now based on P (probability of error)
+  annotate("text", x = 0.1, y = 10, label = "Q=10 (P=0.1)", hjust = 0, vjust = -0.5, size = 3, color = "darkgreen") +
+  annotate("text", x = 0.01, y = 20, label = "Q=20 (P=0.01)", hjust = 0, vjust = -0.5, size = 3, color = "darkgreen") +
+  annotate("text", x = 0.001, y = 30, label = "Q=30 (P=0.001)", hjust = 0, vjust = -0.5, size = 3, color = "darkgreen") +
+  annotate("text", x = 0.0001, y = 40, label = "Q=40 (P=0.0001)", hjust = 0, vjust = -0.5, size = 3, color = "darkgreen")
+```
+
+* To encode a quality score as a single character, first it is compressed  down to a two-digit number by Phred encoding. 
+* For a call with a confidence of 99.9%, or 1/1000 chance of error, we would get a Phred score of 30.
+* Obtained number is offset by adding 33 (Phred +33.) and the corresponding symbol is taken from the ASCII table
+  * A Phred score of 0 (meaning 100% error probability) corresponds to an ASCII value of 0+33=33, which is the exclamation mark (!).
+  * A Phred score of 10 (90% accuracy, 10% error) corresponds to an ASCII value of 10+33=43, which is the plus sign (+).
+  * A Phred score of 30 (99.9% accuracy, 0.1% error) corresponds to an ASCII value of 30+33=63, which is the question mark (?).
+  * A Phred score of 40 (99.99% accuracy, 0.01% error) corresponds to an ASCII value of 40+33=73, which is the character I.
+
+```{r ascii, cache = FALSE, echo = TRUE, collapse=TRUE, results='asis'}
+ascii_data <- data.frame(
+  Decimal = 0:127,
+  Character = sapply(0:127, function(i) {
+    char_val <- if (i >= 0 && i <= 31) {
+      # Common control characters
+      # Using switch for readability for control characters
+      switch(i + 1, # R indexing starts at 1
+             "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
+             "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
+             "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
+             "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US"
+      )
+    } else if (i == 127) {
+      "DEL" # Delete character
+    } else {
+      # Printable ASCII characters
+      intToUtf8(i)
+    }
+    # Pad all characters to a consistent width (e.g., 5 characters) for alignment
+    # This ensures columns line up nicely when printed side-by-side
+    sprintf("%-5s", char_val)
+  }),
+  stringsAsFactors = FALSE # Prevent automatic conversion to factors
+)
+
+section_size <- 32
+
+# split the data into 4 sections so we can show side by side
+df_list <- lapply(1:4, function(k) {
+  start_row <- (k - 1) * section_size + 1
+  end_row <- k * section_size
+  section_df <- ascii_data[start_row:end_row, ]
+  return(section_df)
+})
+# Combine the sections side-by-side into a single wide data frame
+combined_df <- do.call(cbind, df_list)
+knitr::kable(combined_df, row.names = FALSE)
+```
+</details>
+
+## 16s amplicon metagenomics analysis 
+
+In microbial community analysis using amplicon sequencing (like 16S rRNA gene sequencing), there are two primary ways to categorize and count the different "types" of microbes present in a sample:
+
+* **Operational Taxonomic Units (OTUs)** is a pragmatic, clustered definition of a microbial "species" or "taxon" based on DNA sequence similarity. 
+  * Traditional approach in amplicon sequencing. The idea is that sequences that are very similar (e.g., sharing 97% identity in their 16S rRNA gene sequence) are likely to come from the same species or a very closely related group of organisms.
+  * An OTU is typically defined as a cluster of DNA sequences that are at least 97% identical to each other over a defined region (e.g., the V4 region of the 16S rRNA gene).
+  * Clustering Process (OTU Clustering):
+    * Read Processing: Raw sequencing reads are quality-filtered, trimmed, and chimeras (sequences formed by two different DNA fragments during PCR) are removed.
+    * Clustering Algorithm: A chosen algorithm (e.g., UPARSE/USEARCH, Mothur, QIIME) takes these processed sequences and groups them into clusters based on the specified similarity threshold (e.g., 97%).
+      * Representative Sequence: From each cluster, a single "representative sequence" is chosen (often the most abundant sequence, or the centroid). This representative sequence is then used for downstream analysis and taxonomic assignment.
+    * The output is an "OTU table" where rows are OTUs (represented by their ID or representative sequence), columns are samples, and the cell values are the counts (abundances) of sequences belonging to that OTU in that sample.
+
+
+* **Amplicon Sequence Variants (ASVs)** represent an exact, unique biological sequence after computational error correction.
+  * ASVs aim to resolve differences down to a single nucleotide, assuming that almost all observed sequence variations are either true biological variants or identifiable sequencing errors. Instead of clustering, they denoise the data.
+  * An ASV is an exact sequence that is inferred to be a true biological sequence _in vivo_, after accounting for and removing sequencing errors, PCR errors, and chimeras.
+  * Determination Process (Denoising):
+    * Quality Filtering & Trimming: Similar to OTUs, raw reads are quality-filtered.
+    * Error Model Learning: Algorithms (like DADA2 or UNOISE3 within USEARCH) learn a statistical model of the sequencing errors for a given dataset/run based on the observed quality scores. This model helps distinguish true biological variation from random errors.
+    * Denoising/Inference: Using the error model, the algorithms identify and remove sequencing errors from the reads. They infer the original, true biological sequences that were present in the sample. Any sequences that are identical after this error correction become a single ASV.
+    * The output is an "ASV table" (often called a "feature table" or "sequence table") where rows are ASVs (represented by their full DNA sequence), columns are samples, and cell values are the error-corrected counts (abundances) of each exact sequence in that sample.
+
+In this workshop we will be using ASV estimation as implemented in the [`dada2`](https://benjjneb.github.io/dada2/) ([Callahan et al. 2016](https://doi.org/10.1038/nmeth.3869)) R package.
+
+**Why dada2?**
+
+- Resolution: DADA2 infers exact amplicon sequence variants (ASVs) from amplicon data, resolving biological differences of even 1 or 2 nucleotides.
+- Accuracy: DADA2 reports fewer false positive sequence variants than other methods report false OTUs.
+- Comparability: The ASVs output by DADA2 can be directly compared between studies, without the need to reprocess the pooled data.
+- Computational Scaling: The compute time of DADA2 scales linearly sample number, and memory requirements are essentially flat.
+- Open Source: DADA2 is licensed under the LGPL version 3.
+
+We will be working with a subset of the [PRJNA616141 BioProject](https://www.ncbi.nlm.nih.gov/bioproject?term=PRJNA616141&cmd=DetailsSearch)
+Containing sequences of two Drosophila species: *D. melanogaster* and *D. subobscura* subject to lead poisoning.
+
+### required software:
+
+On Windows:
+
+* Download and install R: https://cran.r-project.org/bin/windows/base/   
+* Optional: Download and install Rtools: https://cran.r-project.org/bin/windows/Rtools/ (required for package building).
+
+On linux:
+
+* Download and install R: https://cran.r-project.org/bin/linux/, https://cran.r-project.org/bin/linux/ubuntu/
+
+IDE: 
+
+* If not experienced download and install R Studio: https://posit.co/download/rstudio-desktop/. 
+* If experienced use proffered IDE (Vscode for example: https://code.visualstudio.com/)
+
+  
+### Required R libraries
+
+```{r libraries, cache = FALSE, echo = TRUE, collapse=FALSE}
+library(tidyverse)
+library(dada2)
+library(phyloseq)
+library(phangorn)
+library(ggrepel)
+library(DECIPHER)
+```
+
+How to install?
+
+```{r libraries2, cache = FALSE, echo = TRUE, eval = FALSE, collapse=FALSE}
+cran_packages <- c("tidyverse", "vegan", "cowplot", "ggrepel", "BiocManager")
+install.packages(cran_packages )
+bioconductor_packages <- c("dada2", "phyloseq", "DESeq2", "DECIPHER")
+BiocManager::install(bioconductor_packages)
+```
+
+
+required non R software:
+
+* `cutadapt`. Installation instructions: https://cutadapt.readthedocs.io/en/stable/installation.html
+
+
+### Inspecting reads
+
+```{r reads, cache = TRUE, echo = TRUE, fig.width = 10, fig.height = 15, collapse=FALSE}
+reads.in <- list.files("fastq/raw", full.names = TRUE)
+fwd.reads.in <- reads.in[grepl("_1.fq.gz", reads.in)]
+rev.reads.in <- reads.in[grepl("_2.fq.gz", reads.in)]
+
+fwd_qual <- plotQualityProfile(fwd.reads.in)
+rev_qual <- plotQualityProfile(rev.reads.in)
+
+plot_grid(fwd_qual + facet_wrap(~file, ncol = 4),
+          rev_qual + facet_wrap(~file, ncol = 4),
+          ncol = 1)
+```
+
+
+### Primer removal (`cutadapt` tool)
+
+Why remove primers?
+
+- PCR Artifacts, Not Biological Sequences - Including them in your final sequence data means you're carrying along non-biological information
+- Impact on Sequence Similarity and Diversity Metrics (Especially for OTU Clustering):
+  - Artificial Homogeneity: All reads for a given amplicon will have the same primer sequence at their ends. These identical stretches artificially increase the overall sequence similarity between reads that originated from different organisms.
+  - Distorted Distance Calculations - Downstream analyses involving distance matrices (calculating beta diversity or for traditional OTU clustering at 97% similarity), rely on accurate sequence divergence. If common primer sequences are included, they will reduce the calculated genetic distance between sequences, potentially leading to sequences from different species being grouped into the same OTU.
+  - OTU Definition Bias: The commonly used 97% similarity threshold for species-level OTUs is based on the full 16S rRNA gene or significant variable regions without primer sequences. Including the conserved primer regions can skew this similarity, making different organisms appear more similar than they actually are based on their variable regions, leading to an underestimation of true diversity.
+- Interference with Denoising Algorithms 
+  - Ambiguous Nucleotides (Degeneracy): Many universal 16S primers contain degenerate bases (e.g., 'N', 'Y', 'R', 'S') to account for natural variation in the primer binding sites across different taxa.
+    - DADA2 and similar tools work by identifying exact sequence variants (ASVs). Ambiguous nucleotides introduce "noise" that the algorithm might misinterpret as true biological variation or, worse, can lead to a massive number of false-positive ASVs or issues with chimera detection. DADA2 chimera removal step requires primers to have been removed, as otherwise the ambiguous nucleotides in most primer sets cause large numbers of false-positive chimeras to be identified.
+- Accurate Taxonomic Assignment: Taxonomic assignment tools rely on comparing your ASVs to reference databases (e.g., SILVA, GreenGenes). These databases contain full-length or primer-free 16S gene sequences.
+
+How to remove primers?
+
+- specialized tools like [`cutadapt`](https://cutadapt.readthedocs.io/en/stable/)
+  - for paired end reads use paired end mode
+  
+```{r cutadapt, cache = FALSE, echo = TRUE, eval = FALSE, collapse=FALSE}
+fwd_primer <- "TACGGGAGGCAGCAG"
+rev_primer <- "CCAGGGTATCTAATCC"
+fwd_fastq_file <- fwd.reads.in[1]
+rev_fastq_file <- rev.reads.in[1]
+reads_out_folder =  "fastq/cutadapt"
+
+
+cutadapt_call <- cutadapt_primers <- paste("-a ^",
+                          fwd_primer,
+                          "...",
+                          as.character(Biostrings::reverseComplement(Biostrings::DNAString(rev_primer))),
+                          " -A ^",
+                          rev_primer,
+                          "...",
+                          as.character(Biostrings::reverseComplement(Biostrings::DNAString(fwd_primer))), sep = "")
+
+  
+fwd_cutadapt_out <- file.path(reads_out_folder, basename(fwd.read))
+rev_cutadapt_out <- file.path(reads_out_folder, basename(rev.read))
+
+cutadapt_call <- paste("cutadapt ",
+                       cutadapt_primers,
+                       " --discard-untrimmed -o ",
+                       fwd_cutadapt_out,
+                       " -p ",
+                       rev_cutadapt_out,
+                       " ",
+                       fwd.read,
+                       " ",
+                       rev.read,
+                       sep = "")
+
+cutadapt_call       
+
+#^TACGGGAGGCAGCAG...GGATTAGATACCCTGG: linked adapter
+
+#-a:  sequence of a 5’ adapter 
+#^: anchored - expected to occur in full length at the beginning of the read
+#...: any number of bases
+#left adapter is anchored and required, right adapter is not anchored ($) so its is optional, will be removed if found
+
+#--discard-untrimmed: if adapter not found remove read
+```  
+
+Utility function to call `cutadapt` from R (`cutadapt` should be visible by R - on system path):
+
+```{r cutadapt2, cache = FALSE, echo = TRUE, eval = TRUE, collapse=FALSE}
+cutadapt <- function(fwd.reads.in,
+                     rev.reads.in,
+                     reads.out,
+                     fwd_primer,
+                     rev_primer){
+  if(missing(fwd.reads.in)){
+    stop("fwd.reads.in must be specified")
+  }
+  
+  if(missing(rev.reads.in)){
+    stop("rev.reads.in must be specified")
+  }
+  
+  if(missing(reads.out)){
+    stop("reads.out must be specified")
+  }
+  
+  if(missing(fwd_primer)){
+    stop("fwd_primer must be specified")
+  }
+  
+  if(missing(rev_primer)){
+    stop("rev_primer must be specified")
+  }
+  
+  
+  cutadapt_primers <- paste("-a ^",
+                            fwd_primer,
+                            "...",
+                            as.character(Biostrings::reverseComplement(Biostrings::DNAString(rev_primer))),
+                            " -A ^",
+                            rev_primer,
+                            "...",
+                            as.character(Biostrings::reverseComplement(Biostrings::DNAString(fwd_primer))), sep = "")
+  dir.create(reads.out)
+  for(i in seq_along(fwd.reads.in)){
+    fwd.read <- fwd.reads.in[i]
+    rev.read <- rev.reads.in[i]
+    
+    fwd.cutadapt <- file.path(reads.out, basename(fwd.read))
+    rev.cutadapt <- file.path(reads.out, basename(rev.read))
+    
+    cutadapt_call <- paste("cutadapt ",
+                           cutadapt_primers,
+                           " --discard-untrimmed -o ",
+                           fwd.cutadapt,
+                           " -p ",
+                           rev.cutadapt,
+                           " ",
+                           fwd.read,
+                           " ",
+                           rev.read,
+                           sep = ""
+    )
+    
+    message(cutadapt_call)
+    cut_primers <-  system(cutadapt_call, intern = TRUE)
+    
+    fileConn <- file(paste(fwd.cutadapt, "_stats.txt", sep = ""))
+    writeLines(cut_primers, fileConn)
+    close(fileConn)
+  }
+}
+
+
+# usage:
+cutadapt(fwd.reads.in = fwd.reads.in,
+         rev.reads.in = rev.reads.in ,
+         reads.out = "fastq/cutadapt",
+         fwd_primer = "TACGGGAGGCAGCAG",
+         rev_primer = "CCAGGGTATCTAATCC")
+```
+
+
+- alternatively, simply trim primer length from sequence start
+
+### Filtering and trimming sequences (the `filterAndTrim()` function)
+
+- Removal of low quality regions
+- Trimming of read ends - sequencing errors are more common at the ends of reads
+- Removal of sequences with too many estimated errors
+- Removal of short sequences
+
+```{r filter_and_trim , cache = FALSE, echo = TRUE, collapse=FALSE}
+reads.in <- list.files("fastq/cutadapt", full.names = TRUE)
+
+fnFs_trim <- reads.in[grepl("_1.fq.gz$", reads.in)]
+fnRs_trim <- reads.in[grepl("_2.fq.gz$", reads.in)]
+filtFs <- file.path("fastq", "filtered", basename(fnFs_trim))
+filtRs <- file.path("fastq", "filtered", basename(fnRs_trim))
+
+filter_and_trim <- filterAndTrim(fnFs_trim,
+                                 filtFs,
+                                 fnRs_trim,
+                                 filtRs,
+                                 truncLen = c(270, 200),
+                                 maxN = 0,
+                                 maxEE = c(2, 2), #After truncation, reads with higher than maxEE "expected errors" will be discarded. Expected errors are calculated from the nominal definition of the quality score: EE = sum(10^(-Q/10))
+                                 minLen = 150,
+                                 rm.phix = TRUE, #discard reads that match against the phiX genome (internal control for sequencing)
+                                 compress = TRUE,
+                                 multithread = FALSE,
+                                 matchIDs = TRUE)
+```
+
+If you do not want to use cutadapt but rather to left trim the sequences to remove primers:
+```{r filter_and_trim2, cache = FALSE, echo = TRUE, eval = FALSE}
+reads.in <- list.files("fastq/raw", full.names = TRUE)
+
+fnFs_trim <- reads.in[grepl("_1.fq.gz$", reads.in)]
+fnRs_trim <- reads.in[grepl("_2.fq.gz$", reads.in)]
+filtFs <- file.path("fastq", "filtered", basename(fnFs_trim))
+filtRs <- file.path("fastq", "filtered", basename(fnRs_trim))
+
+out <- filterAndTrim(fnFs_trim,
+                     filtFs,
+                     fnRs_trim,
+                     filtRs,
+                     trimLeft = 20,
+                     truncLen = c(270, 200),
+                     maxN = 0,
+                     maxEE = c(2, 2), #
+                     minLen = 150,
+                     rm.phix = TRUE,
+                     compress = TRUE,
+                     multithread = FALSE,
+                     matchIDs = TRUE)
+```
+
+
+Inspect reads after filtering:
+```{r reads_after_trim, cache = TRUE, echo = TRUE, fig.width = 10, fig.height = 15, collapse=FALSE}
+fwd_qual <- plotQualityProfile(filtFs)
+rev_qual <- plotQualityProfile(filtRs)
+
+plot_grid(fwd_qual + facet_wrap(~file, ncol = 4),
+          rev_qual + facet_wrap(~file, ncol = 4),
+          ncol = 1)
+```
+
+
+### Central step of the DADA2 algorithm. Error rates (The `learnErrors()` function)  and denoising (The `dada()` function) with `selfConsist = TRUE`
+
+Components:
+
+1. **The Error Model**
+
+DADA2 learns the specific error rates (e.g., A→T, G→C errors) from your own sequencing data using a parametric error model, which is more accurate than using a universal error model. 
+
+The error model is a set of nucleotide-transition probability tables. Specifically, for each possible base transition (e.g., A to C, G to T, C to A, etc.), and for each Phred quality score, DADA2 estimates the probability of that error occurring.
+
+The error model assumes that errors at different nucleotide positions are independent, and that the probability of a specific base transition at a given quality score is generally independent of the surrounding sequence context.
+
+The Phred quality score ($Q$) is a crucial component, as it represents the estimated probability of an incorrect base call ($P$):
+
+$$
+Q = -10 \log_{10}(P)
+$$
+
+Conversely, the probability of an error ($P$) can be derived from the quality score ($Q$):
+
+$$
+P = 10^{-Q/10}
+$$
+   
+DADA2 utilizes these quality scores to estimate the probability of specific nucleotide transitions. We define this as $p(B_{actual} \to B_{observed} | Q)$, the probability that a true base $B_{actual}$ is sequenced as $B_{observed}$ given a Phred quality score $Q$.
+
+DADA2 constructs an error rate matrix, or set of matrices $M$. For specific bases and quality scores, $M_{B_{actual}, B_{observed}, Q}$ represents the estimated probability (or rate)   of a true base $B_{actual}$ being miscalled as $B_{observed}$ when the sequencer reports quality score $Q$.
+  
+The observed error rates are often noisy. To obtain a generalized model, DADA2 uses **LOESS (Locally Estimated Scatterplot Smoothing)** regression.
+LOESS is applied to fit a smooth curve for each possible base transition (e.g., A $\to$ C, A $\to$ G, etc.) as a function of the quality score.
+This smooth curve represents the refined estimated probability $p(B_{actual} \to B_{observed} | Q)$.
+  
+The probability that a specific observed read $i$ was generated from a true biological sequence $j$ is modeled as the product of the position-specific transition probabilities. This       probability, denoted $\lambda_{j \to i}$ assumes that errors at different nucleotide positions are independent.
+
+$$
+ \lambda_{j \to i} = \prod_{l=1}^{L} p(j(l) \to i(l) | q_i(l))
+$$
+   
+Where:
+
+   * $\lambda_{j \to i}$ is the overall per-read probability that true sequence $j$ would produce observed sequence $i$.
+  
+   * $L$ is the length of the aligned sequences.
+  
+   * $j(l)$ is the nucleotide at position $l$ in the true sequence $j$
+  
+   * $i(l)$ is the nucleotide at position $l$ in the observed read $i$.
+  
+   * $q_i(l)$ is the Phred quality score of the base at position $l$ in read $i$.
+  
+   * $p(j(l) \to i(l) | q_i(l)))$ is the specific probability of a true nucleotide $j(l)$ being read as $i(l)$, given the quality score $q_i(l)$ at that position.
+
+   The formula multiplies ($\prod$) the probabilities for each nucleotide position $l$ up to the aligned sequence length $L$.
+
+
+2. **Expected Number of Error Reads**
+
+   This calculates the expected number of times you'd see read $i$ if it were purely the result of errors from the more abundant sequence $j$.
+
+$$
+\mathbf{\Lambda_{ji}} = n_j \cdot \lambda_{j \to i}
+$$
+Where:
+
+   * $\mathbf{\Lambda_{ji}}$ is the expected count of error reads of sequence $i$ generated from sequence $j$.
+
+   * $n_j$ is the total number of reads (abundance) for the true sequence $j$.
+
+   * $\lambda_{j \to i}$ is the per-read error probability calculated in the first formula.
+
+
+3. **Abundance P-value**
+
+To decide if a unique sequence is a true variant or just an error, DADA2 calculates an abundance p-value. 
+It quantifies the likelihood that the observed abundance of unique sequence $i$ ($a_i$) is too high to be explained purely by sequencing errors from a higher-abundance sequence $j$. It    is defined as:
+
+
+$$
+p_A(j \to i) = \frac{P(X \ge a_i \mid X \sim \text{Poisson}(\mathbf{\Lambda_{ji}}))}{1 - P(X=0 \mid X \sim \text{Poisson}(\mathbf{\Lambda_{ji}}))}
+$$
+Where:
+
+   * $a_i$: The observed abundance of unique sequence $i$.
+
+   * $X$: A random variable representing the number of times sequence $i$ would be observed if it were purely an error from sequence $j$.
+
+   * $\text{Poisson}(\mathbf{\Lambda_{ji}})$: A Poisson distribution with an expected value equal to $\mathbf{\Lambda_{ji}}$.
+
+   * The numerator $P(X \ge a_i \mid X \sim \text{Poisson}(\mathbf{\Lambda_{ji}}))$ is the probability of observing $a_i$ or more reads of $X$.
+
+   * The denominator $1 - P(X=0 \mid X \sim \text{Poisson}(\mathbf{\Lambda_{ji}}))$ is the probability of observing at least one read of $X$, conditioning the p-value on its observation.
+
+
+The p-value (represented by the sum in the numerator) calculates the probability of observing $k$ reads, from the actual observed abundance $a_i$ up to infinity. A low p-value suggests the sequence is a true variant (ASV).
+
+If this p-value is smaller than a defined threshold ($\Omega_A$), the null hypothesis is rejected, and the sequence $i$ is considered a true Amplicon Sequence Variant (ASV).
+
+
+To sum up:
+
+We have some probability of getting an observed sequence from a true sequence just due to sequencing errors
+If the amount of the observed sequence is higher than we would expect just based on the errors we declare it as a true sequence.
+
+But how to know which are the true sequences from the pool of sequenced data in order to calculate the above?
+
+**The self consistent partitioning model**
+
+The `selfConsist` argument enables the simultaneous inference of the error model and the true sample sequences. When `selfConsist` = TRUE, DADA2 performs an iterative process:
+
+1. **Initialization**: The algorithm starts with an initial guess for the error rates. This is typically a "maximum possible" error rate matrix derived from the data, assuming all reads are errors apart from a single, most abundant sequence.
+
+2. **Sample Inference (Partitioning)**: Using the current error model, the algorithm partitions the dereplicated sequences into groups that are likely to have originated from the same true sequence (later we go into more details).
+
+3. **Error Rate Re-estimation**: A new error model is estimated from the partitioned sequences. This is done by comparing the observed sequences to the inferred "true" sequences within each partition.
+
+4. **Convergence Check**: The algorithm checks if the error rates have converged. If not, it repeats steps 2 and 3 with the updated error model. This iterative process continues until the error rates stabilize, resulting in a jointly consistent solution for the error model and the inferred sample composition.
+
+**The Partitioning Process**
+
+Dereplicate sequences to generate unique sequence + abundances.
+
+Start with one partition and declare the most abundant sequence a true ASV.
+
+1. **Bud**: Searches through all sequences in all current partitions to find the single sequence that is the best candidate to become a new ASV. This "best candidate" is the one with the lowest abundance p-value (after passing other checks like minimum abundance and fold-change). If this lowest p-value is significant (i.e., less than the threshold $\Omega_A$after correction), that sequence "buds" off to form a new partition/cluster.
+
+2. **Shuffle**: After a new ASV is found (or even after an iteration where no new ASV is found), re-evaluate the partition assignment for every non-center sequence. Each sequence is moved to the partition/cluster for which its is most likely to originate from ensuring all sequences are in their most likely partition based on the current set of identified ASVs.  
+  
+   For any given unique sequence ($seq_i$), the algorithm compares it against every established ASV partition ($ASV_j$, $ASV_k$, etc.). For each comparison, it calculates the expected     number of times $seq_i$ would appear as an error from that ASV.  
+  
+$$
+E_{ji} = n_j \cdot \lambda_{ji}
+$$  
+
+Where:
+  
+   * $n_j$  is the total number of reads assigned to the partition for $ASV_j$.  
+   * $\lambda_{ji}$ is the per-read probability that an error in $ASV_j$ would produce $seq_i$, based on their sequence differences and quality scores.  
+
+
+Continue this "Bud & Shuffle" loop until no more sequences can be significantly separated into new ASVs.
+
+
+### In practice
+
+1. **Error estimation (The `learnErrors()` function)**
+
+```{r error_learning_fwd, cache = FALSE, echo = TRUE}
+errF <- learnErrors(filtFs, 
+                    multithread = TRUE,
+                    nbases = 1e+10,
+                    MAX_CONSIST = 20,
+                    verbose = TRUE) 
+```
+
+```{r error_learning_fwd2, cache = FALSE, echo = TRUE, fig.width = 10, fig.height = 10}
+dada2::plotErrors(errF)
+```
+
+
+```{r error_learning_rev, cache = FALSE, echo = TRUE}
+errR <- learnErrors(filtRs,
+                    multithread = TRUE,
+                    nbases = 1e+10,
+                    MAX_CONSIST = 20,
+                    verbose = TRUE)  
+```
+
+```{r error_learning_rev2, cache = FALSE, echo = TRUE, fig.width = 10, fig.height = 10}
+dada2::plotErrors(errR)
+```
+
+
+2. **Dereplication  (The `derepFastq()` function)**
+
+DADA2 groups identical reads together. Instead of processing millions of individual reads, it works with a much smaller set of unique sequences and a count of how many times each sequence was observed. This significantly reduces computation time.
+
+```{r dereplication, cache = FALSE, echo = TRUE}
+derepFs <- derepFastq(filtFs, verbose = TRUE)
+derepRs <- derepFastq(filtRs, verbose = TRUE)
+```
+
+
+3. **Denoising (The `dada()` function)**
+
+
+```{r dada, cache = FALSE, echo = TRUE}
+dadaFs <- dada(derepFs,
+               err = errF,
+               multithread = TRUE,
+               selfConsist = TRUE)
+
+dadaRs <- dada(derepRs,
+               err = errR,
+               multithread = TRUE,
+               selfConsist = TRUE)
+```
+
+
+The `selfConsist = TRUE` iterative process, performed independently for each sample (or on pooled sequences), allows DADA2 to robustly infer the true ASVs present and their abundances, effectively stripping away sequencing noise. The reliance on the learned error model and statistical inference makes it highly sensitive to single-nucleotide differences while being robust against typical sequencing errors.
+
+### Merging left and right reads (`mergePairs()`)
+
+Merge the dereplicated sequences rejecting with a sufficient overlap (`minOverlap`). The overlap needs to be perfect by default (` maxMismatch`). `trimOverhang` is recommended if not used `cutadapt` in paired end mode.
+
+```{r merge, cache = FALSE, echo = TRUE}
+mergers <- mergePairs(dadaFs,
+                      derepFs,
+                      dadaRs,
+                      derepRs,
+                      verbose = TRUE,
+                      minOverlap = 20)
+```
+
+
+### Create a sequence table (`makeSequenceTable()`)
+
+Result is a matrix of sequences as rows and samples in columns, each cell is a count.
+`collapseNoMismatch` will collapse sequences that are identical up to shifts or length variation. The representative will the most abundant sequence.
+
+```{r seqtab, cache = FALSE, echo = TRUE}
+seqtab <- makeSequenceTable(mergers)
+seqtab_collapse <- collapseNoMismatch(seqtab)
+```
+
+### Bimera removal (`removeBimeraDenovo()`)
+
+A bimera is a two-parent chimera, in which the left side is made up of one parent sequence, and the right-side made up of a second parent sequence.
+ 
+ For a given sequence being tested (the "query") in a specific sample:
+ 
+  * **Identify Potential Parents**: The algorithm first identifies a set of valid parent sequences. A sequence is considered a potential parent only if it is significantly more abundant than the query sequence within that same sample. This is controlled by the `minFoldParentOverAbundance` and `minParentAbundance` parameters (`isBimeraDenovo` function - can be passed from `removeBimeraDenovo`).
+  * **Find the Best Left and Right Matches**: The algorithm then tries to explain the query sequence using the set of parents. It does this by finding the longest possible matches from both ends:
+    * **Best Left Parent**: It compares the query to all potential parents to find the one that provides the longest stretch of exact matching sequence starting from the left end. The length of this longest match is recorded (`max_left`).
+    * **Best Right Parent**: It repeats the process from the right end, finding the parent that provides the longest exact match. This length is recorded (`max_right`).
+  * **Flag as bimera**: : The query sequence is flagged as a chimera if the best left match and the best right match can collectively cover its entire length `(max_left + max_right >= query_sequence_length)`.  
+  If this condition is true, it means a two-parent model perfectly explains the query sequence, and it is flagged as a chimera for that sample. A sequence might be flagged as chimeric in a sample where abundant parents are present, but not in another sample where they are absent.
+  
+```{r bimera, cache = FALSE, echo = TRUE}
+seqtab_nochim <- removeBimeraDenovo(seqtab_collapse,
+                                    multithread = FALSE,
+                                    verbose = TRUE)
+```
+
+### Inspecting sequence distribution and read loss
+
+```{r seq_dist, cache = FALSE, echo = TRUE, fig.width=8, fig.height=5}
+t(seqtab_nochim) %>%
+  as.data.frame() %>%
+  rownames_to_column("seq") %>%
+  mutate(length = nchar(seq),
+         reads = rowSums(.[2:ncol(.)])) %>%
+  group_by(length) %>%
+  summarise(reads = sum(reads)) %>%
+  ggplot()+
+  geom_line(aes(x = length, y = reads)) +
+  theme_classic() +
+  geom_vline(xintercept = 400, color = "grey50", lty = 2)+
+  geom_vline(xintercept = 428, color = "grey50", lty = 2)
+```
+
+
+V3V4 has a bimodal length distribution..
+
+Removal of unexpectedly short sequences:
+
+```{r seq_dist2, cache = FALSE, echo = TRUE}
+seqtab_length <- seqtab_nochim[,nchar(colnames(seqtab_nochim)) %in% seq(400,428)]
+```
+
+Track of sequences:
+
+```{r track2, cache = FALSE, echo = TRUE, results='markup'}
+input_count <- ShortRead::countFastq("fastq/raw")
+input_count <- input_count  %>%
+  rownames_to_column("sample") %>%
+  filter(grepl("_1\\.fq\\.gz$", sample))
+
+cutadapt_count <- ShortRead::countFastq("fastq/cutadapt")
+cutadapt_count <- cutadapt_count %>%
+  rownames_to_column("sample") %>%
+  filter(grepl("_1\\.fq\\.gz$", sample))
+
+filtered_count <- ShortRead::countFastq("fastq/filtered")
+filtered_count <- filtered_count %>%
+  rownames_to_column("sample") %>%
+  filter(grepl("_1\\.fq\\.gz$", sample))
+
+##helper function
+getN <- function(x) sum(getUniques(x))
+
+track <- data.frame(sample = input_count$sample,
+                    input = input_count$records,
+                    primers = cutadapt_count$records,
+                    filtered = filtered_count$records,
+                    denoisedF = sapply(dadaFs, getN),
+                    denoisedR = sapply(dadaRs, getN),
+                    merged = sapply(mergers, getN),
+                    chimera_remove = rowSums(seqtab_nochim),
+                    length_trim = rowSums(seqtab_length))
+
+
+rownames(track) = NULL
+
+track <- track %>%
+  mutate(percent_final = length_trim/input * 100)
+
+knitr::kable(track, digits = 2)
+```
+
+
+### Taxonomy assignment 
+
+Taxonomic assignment is the process of putting a biological name on the inferred ASVs. After denoising, an ASV is just a DNA sequence; assigning it a taxonomy (e.g., Lactobacillus) gives it biological meaning, which is essential for downstream analysis and interpretation. Two common approaches are used to accomplish this:
+
+  * **Direct Comparison Methods**. The most intuitive method is to search for the sequence in a comprehensive reference database, typically using an alignment tool like BLAST. The taxonomy of the best-matching reference sequence is then transferred to the query ASV.  
+    * **Computationally slow**. requires pairwise alignment of each ASV against a massive database.
+    * **Difficult to interpret the results**. There is no universal rule that links percentage identity to a specific taxonomic rank. For example, a 99% match might be to a well-defined species, but it could also be to a completely different genus that just happens to be the closest relative in the database. This ambiguity makes it hard to decide at which taxonomic level the assignment is truly reliable. Lower percentage identity (<90%) is even harder to interpret.
+    
+  * **Classifier-Based Methods**. Supervised learning algorithm is trained on features extracted from sequences from a curated reference database (like [SILVA](https://www.arb-silva.de/) or [GTDB](https://gtdb.ecogenomic.org/)) to "learn" the characteristic features of different taxonomic groups. For example, algorithms like the RDP Classifier ([Wang et al. 2007](https://doi.org/10.1128/AEM.00062-07)) or IdTaxa ([Murali et al. 2018](https://doi.org/10.1186/s40168-018-0521-5)) learn which short DNA words, or k-mers, are distinctive for each taxon. When classifying a new ASV, the algorithm checks which of these characteristic features the ASV possesses and calculates a score for each possible taxonomy. 
+    * **Much faster**. They avoid full alignments. 
+    * **Statistical rigor**. Usually these methods provide a confidence score (e.g., a bootstrap value) for each taxonomic level assigned. This allows researchers to trim the taxonomy at the last confident rank (e.g., Family level with >90% confidence), preventing over-confident assignments to uncertain species or genera.
+    
+    
+### The `IdTaxa` algorithm
+
+[Links](https://benjjneb.github.io/dada2/training.html) to reference data.
+
+Download the training sequences:
+```{r taxa, cache = FALSE, echo = TRUE, results='markup'}
+# download and save training sequences
+gtdb_genus <- "https://zenodo.org/records/13984843/files/GTDB_bac120_arc53_ssu_r220_genus.fa.gz"
+gtdb_species <- "https://zenodo.org/records/13984843/files/GTDB_bac120_arc53_ssu_r220_species.fa.gz"
+
+gtdb_genus_train_set <- Biostrings::readDNAStringSet(gtdb_genus)
+gtdb_species_train_set <- Biostrings::readDNAStringSet(gtdb_species)
+
+if (!dir.exists("gtdb")) dir.create("gtdb")
+Biostrings::writeXStringSet(gtdb_genus_train_set, "gtdb/gtdb_genus_train_set.fasta",  format="fasta")
+Biostrings::writeXStringSet(gtdb_species_train_set, "gtdb/gtdb_species_train_set.fasta",  format="fasta")
+```
+
+Optional! Trim the sequences based on used primers:
+```{r taxa2, cache = FALSE, echo = TRUE, results='markup'}
+forward_primer <- "TACGGGAGGCAGCAG"
+reverse_primer <-  "CCAGGGTATCTAATCC"
+reverse_primer_rc <- as.character(Biostrings::reverseComplement(Biostrings::DNAString(reverse_primer)))
+
+input_fasta_file <- "gtdb/gtdb_genus_train_set.fasta"
+output_fasta_file <- "gtdb/gtdb_genus_trimmed_train_set.fasta"
+cutadapt_command <- paste(
+  "cutadapt",
+  "-a", paste(forward_primer, "...", reverse_primer_rc, sep = ""),
+  "--discard-untrimmed",
+  " --action trim",
+  "-o", output_fasta_file,
+  input_fasta_file
+)
+
+cutadapt_output <- system(cutadapt_command, intern = TRUE)
+
+fileConn <- file(paste(output_fasta_file, "_stats.txt", sep = ""))
+writeLines(cutadapt_output , fileConn)
+close(fileConn)
+
+train_set <- Biostrings::readDNAStringSet( "gtdb/gtdb_genus_trimmed_train_set.fasta")
+hist(Biostrings::width(train_set))
+```
+
+Optional! Remove too short or too long sequences
+```{r taxa3, cache = FALSE, echo = TRUE, results='markup'}
+final_train_set <- train_set[Biostrings::width(train_set) > 350 & Biostrings::width(train_set) < 450]
+length(final_train_set)/length(train_set)
+```
+
+Train:
+```{r taxa4, cache = FALSE, echo = TRUE, results='markup'}
+tax_labels <- paste("Root", names(final_train_set), sep = ";")
+set.seed(123)
+gtdb_idtaxa <- DECIPHER::LearnTaxa(final_train_set,
+                                    tax_labels)
+
+```
+
+Optional! Save model for reuse in later sessions:
+```{r taxa_save, cache = FALSE, echo = TRUE, results='markup'}
+saveRDS(gtdb_idtaxa, "gtdb/gtdb_idtaxa.rds")
+```
+
+Optional! Load model:
+```{r taxa_load, cache = FALSE, echo = TRUE, results='markup'}
+gtdb_idtaxa <- readRDS("gtdb/gtdb_idtaxa.rds")
+```
+
+Infer taxonomy:
+```{r taxa5, cache = FALSE, echo = TRUE, results='markup'}
+set.seed(123)
+gtdb_tax_seqtab_length <- DECIPHER::IdTaxa(Biostrings::DNAStringSet(colnames(seqtab_length)),
+                                           gtdb_idtaxa) 
+```
+
+
+Cleanup:
+```{r taxa6, cache = FALSE, echo = TRUE, results='markup'}
+lapply(gtdb_tax_seqtab_length, function(x) c(x$taxon, rep("", 8 - length(x$taxon)))) %>%
+  do.call(rbind, .) %>%
+  as.data.frame() %>%
+  select(-V1, -V8) %>%
+  dplyr::rename(Kingdom = V2,
+                Phylum = V3,
+                Class = V4,
+                Order = V5,
+                Family = V6,
+                Genus = V7) %>%
+  mutate_all(~ifelse(. == "", NA, .)) %>%
+  mutate_all(~ifelse(grepl("^unclassified_", .), NA, .)) -> gtdb_tax_seqtab_length 
+
+
+gtdb_tax_seqtab_length %>%
+  knitr::kable(format = "html") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::scroll_box(height = "400px")
+```
+
+Species assignment:
+```{r taxa7, cache = FALSE, echo = TRUE, results='markup'}
+taxa <- as.matrix(gtdb_tax_seqtab_length)
+rownames(taxa) <- colnames(seqtab_length)
+
+taxa <- dada2::addSpecies(taxa,
+                         "gtdb/gtdb_species_train_set.fasta",
+                          allowMultiple = TRUE)
+
+taxa %>%
+  knitr::kable(format = "html") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::scroll_box(height = "400px")
+```
+
+### [Phyloseq](https://joey711.github.io/phyloseq/) ([McMurdie and Holmes, 2013](https://doi.org/10.1371/journal.pone.0061217))
+
+Phyloseq is an R package designed to import, store, analyze, and visualize complex microbiome data. Providing a powerful, unified data structure that seamlessly combines abundance tables (OTUs or ASVs), taxonomy, sample data, and phylogenetic trees into a single object. This integration simplifies data management and enables a wide range of downstream analyses and ggplot2-based visualizations within a consistent workflow.
+
+Model matrix:
+```{r phyloseq1, cache = FALSE, echo = TRUE, results='markup'}
+samples <- rownames(seqtab_length)
+mm <- data.frame(sample = gsub("_\\d+.fq.gz$", "", samples),
+                 species = ifelse(grepl("Dmel", samples), "D. melanogaster", "D. subobscura"))
+
+rownames(mm) <- samples
+mm
+```
+
+
+Create phyloseq object:
+```{r phyloseq2, cache = FALSE, echo = TRUE, results='markup'}
+ps <- phyloseq::phyloseq(phyloseq::otu_table(seqtab_length, taxa_are_rows = FALSE),
+                         phyloseq::sample_data(mm),
+                         phyloseq::tax_table(taxa)) 
+ps
+```
+
+
+Filter methods (take specific taxa for further analysis):
+```{r phyloseq3, cache = FALSE, echo = TRUE, results='markup'}
+ps_acetobacteraceae <- phyloseq::subset_taxa(ps, Family == "Acetobacteraceae")
+ps_acetobacteraceae
+```
+
+
+Filter methods  (take only abundant ASVs):
+```{r phyloseq4, cache = FALSE, echo = TRUE, results='markup'}
+phyloseq::filter_taxa(ps, function(x) any(x > 100), prune = TRUE)
+```
+
+
+Aggregation methods based on taxonomy:
+```{r phyloseq5, cache = FALSE, echo = TRUE, results='markup'}
+phyloseq::tax_glom(ps, "Genus")
+
+phyloseq::tax_glom(ps, "Order")
+```
+
+
+Various plots:
+```{r bar, cache = FALSE, echo = TRUE, results='markup', fig.width=10, fig.height=10}
+phyloseq::plot_bar(ps, fill = "Family")
+```
+
+
+Transformation of counts + full integration of plotting functions with [`ggplot2`](https://ggplot2.tidyverse.org/):
+```{r bar2, cache = FALSE, echo = TRUE, results='markup', fig.width=10, fig.height=10}
+ps_percentage <- phyloseq::transform_sample_counts(ps, function(x) x / sum(x) * 100)
+ps_percentage <- phyloseq::transform_sample_counts(ps, function(x) x / sum(x))
+phyloseq::plot_bar(ps_percentage, fill = "Family") + 
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() +
+  ggtitle("Relative Abundance by Family") +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,      
+      hjust = 1,       
+      vjust = 1,      
+      size = 10       
+    )
+  )
+```
+
+
+Alpha diversity:
+```{r alpha, cache = FALSE, echo = TRUE, results='markup'}
+phyloseq::estimate_richness(ps) %>%
+  knitr::kable()
+```
+
+
+Alpha diversity plot:
+```{r alpha2, cache = FALSE, echo = TRUE, results='markup', fig.width=10, fig.height=10}
+phyloseq::plot_richness(ps,
+                        x = "species", # this is the "soecies" from our model matrix
+                        color = "species")
+```
+
+
+Rarefaction + alpha diversity:
+```{r alpha3, cache = FALSE, echo = TRUE, results='markup'}
+ps_rarefied <- phyloseq::rarefy_even_depth(ps)
+phyloseq::estimate_richness(ps_rarefied) %>%
+  knitr::kable()
+```
+
+
+Estimate a GTR + gamma + inv model ML phyogetic tree and add to phylosec object:
+```{r tree, cache = FALSE, echo = TRUE, results='hide'}
+gtr_tree <- function(ps){
+  # 1. Extract sequences from the phyloseq object
+  seqs <- colnames(phyloseq::otu_table(ps))
+  
+  # 2. Assign names to the sequences
+  names(seqs) <- seqs
+  
+  # 3. Align the sequences using DECIPHER
+  alignment <- DECIPHER::AlignSeqs(Biostrings::DNAStringSet(seqs),
+                                   anchor = NA,
+                                   verbose = FALSE,
+                                   iterations = 10,
+                                   refinements = 10)
+  
+  # 4. Mask Poorly aligned regions of a multiple sequence alignment. 
+  # May lead to incorrect results in downstream analyses. 
+  # One method to mitigate their effects is to mask columns of the alignment that may be poorly aligned,
+  # such as highly-variable regions or regions with many insertions and deletions (gaps).
+  alignment_masked <- DECIPHER::MaskAlignment(alignment,
+                                              correction = TRUE,
+                                              showPlot = FALSE)
+  
+  alignment <- as(alignment_masked, "DNAStringSet")
+
+  # 5. Convert the alignment to a phangorn object
+  phangAlign <- phangorn::phyDat(as(alignment, "matrix"),
+                                 type = "DNA")
+  
+  # https://cran.r-project.org/web/packages/phangorn/vignettes/MLbyHand.html
+  # fit a maximum likelihood model using General Time Reversible. substitution model, "G(4)" discrete gamma model, "I" invariant sites
+  fitGTR <- phangorn::pml_bb(phangAlign,
+                             model = "GTR+G(4)+I",
+                             rearrangement = "stochastic")
+  
+  # 7.  Add the final phylogenetic tree to the phyloseq object
+  phyloseq::phy_tree(ps) <- phangorn::midpoint(fitGTR$tree)
+  return(ps)
+}
+
+ps <- gtr_tree(ps)
+```
+
+
+Plot the phylogenetic tree and decorate with abundances and sample information: 
+```{r tree2, cache = FALSE, echo = TRUE, results='markup', fig.width=10, fig.height=14}
+taxa <- phyloseq::tax_table(ps)
+seqs <- rownames(taxa)
+taxa_df <- as.data.frame(taxa)
+
+taxa_df[,"Family_Genus"] <- ifelse(!is.na(taxa_df[,"Family"]) & !is.na(taxa_df[,"Genus"]),
+                                   paste(taxa_df[,"Family"], taxa_df[,"Genus"]),
+                                   taxa_df[,"Family"])
+rownames(taxa_df) <- seqs
+
+
+phyloseq::tax_table(ps) <- as.matrix(taxa_df)
+
+
+phyloseq::plot_tree(ps,
+                    size = "Abundance",
+                    color = "Sample",
+                    label.tips = "Family_Genus") +
+  scale_color_manual(values = c("Dmel_K_St_M_1.fq.gz" = "red",
+                                "Dmel_Sl_St_F_1.fq.gz" = "red",
+                                "Dmel_Sl_St_M_1.fq.gz" = "red",
+                                "Dmel_St_K_1.fq.gz" = "red",
+                                "Dmel_St_K_1.fq.gz" = "red",
+                                "Dmel_St_Sl_1.fq.gz" = "red",
+                                "Dsub_K_St_F_1.fq.gz" = "dodgerblue",
+                                "Dsub_K_St_M_1.fq.gz" = "dodgerblue",
+                                "Dsub_Sl_St_F_1.fq.gz" = "dodgerblue",
+                                "Dsub_Sl_St_M_1.fq.gz" = "dodgerblue",
+                                "Dsub_St_K_1.fq.gz" = "dodgerblue",
+                                "Dsub_St_Sl_1.fq.gz" = "dodgerblue"))
+```
+
+
+Various distance metrics. For example weighted unifrac ([Lozupone and Knight, 2005](https://doi.org/10.1128/AEM.71.12.8228-8235.2005)):
+```{r dist, cache = FALSE, echo = TRUE, results='markup'}
+wunifrac_dist <- phyloseq::distance(ps,
+                                    method = "wunifrac",
+                                    type = "samples")
+
+wunifrac_dist
+```
+
+
+Beta Diversity using double principal coordinate analysis (DPCoA) ([Pavoine et al., 2004](https://doi.org/10.1016/j.jtbi.2004.02.014)):
+```{r dist2, cache = FALSE, echo = TRUE, results='markup', fig.width=10, fig.height=5}
+ps_dpcoa <- phyloseq::ordinate(ps,
+                               "DPCoA",
+                               "wunifrac")
+
+plot_ordination(ps, 
+                ps_dpcoa,
+                "samples",
+                color = "species") +
+  ggrepel::geom_text_repel(aes(label = sample)) +
+  theme_bw()
+```
+
+
+Session Info:
+```{r session, cache = FALSE, echo = TRUE, results='markup'}
+sessionInfo()
+```
