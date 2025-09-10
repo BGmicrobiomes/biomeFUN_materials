@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>BiomeFUN 2025 – Install & Environment Setup</title>
+
+    <!-- Use the same theme/CSS as the provided page -->
+    <link rel="stylesheet" href="./index_files/styles.css">
+    <link rel="stylesheet" href="./index_files/pygment_trac.css">
+    <meta name="viewport" content="width=device-width">
+    <base href="." target="_blank">
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <img src="./index_files/logo-black.png" alt="Logo">
+        <img src="./index_files/logo_svi.jpg" alt="Logo_svi">
+        <p><br><small>This work is licensed under a
+          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            Creative Commons Attribution-ShareAlike 4.0 International License
+          </a></small>.
+        </p>
+        <p>
+          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            <img alt="Creative Commons License" style="border-width:0" src="./index_files/88x31.png">
+          </a>
+        </p>
+        <p>
+          This webpage was adapted from <a href="https://net-science.github.io/"> https://net-science.github.io/ </a>. You are free to share and adapt the material in any way, providing appropriate credit and distributing your modifications under the same license.
+        </p>
+        <p><small>Hosted on GitHub Pages — Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </header>
+     <section>
+        <h2>Tools for genomics practicals</h2>
+            <p> Install SSH client</p>
+            <ul>
+            <li><strong>Windows:</strong> Download the “MobaXterm Home Edition” (installer edition) <a href="https://mobaxterm.mobatek.net/download-home-edition.html"> here. </a>
+            </li>
+            <li><strong>Linux and macOS:</strong> Use the pre-installed Terminal app.</li>
+            </ul>
+
+            <p>File transfer client</p>
+            <ul>
+            <li><strong>Windows, Linux, and macOS:</strong> Download FileZilla Client <a href="https://filezilla-project.org/download.php?type=client"> here.</a>
+            </li>
+            </ul>
+
+            <p>Integrated Genome Viewer (IGV)</p>
+            <ul>
+            <li><strong>Windows, Linux, macOS:</strong> Download IGV for your OS (choose the “Java included” version) <a href="https://igv.org/doc/desktop/#DownloadPage/#all-platforms"> here.</a>
+            </li>
+            </ul>
+      </section>
+
+      <section>
+        <h2>Installation of R</h2>
+
+        <p><a href="https://posit.co/download/rstudio-desktop/">Download and install R and RStudio</a></p>
+
+        <p>Please update R if you have it installed but you haven’t updated them in the last 6—12 months.</p>
+
+        <p>Please test that your installation works by downloading the two files in this folder.</p>
+
+        <p>To test that everything works correctly, open <strong>test_R.Rmd</strong> with RStudio and try to run it.</p>
+
+      </section>
+      <section>
+        <h2> Installation of Anaconda and Conda Environment Setup</h2>
+
+        <p><a href="https://www.anaconda.com/download">Download and install Anaconda</a></p>
+
+
+        <p>
+          This section contains the steps and prompts you'll need to install the new Conda environment called <strong>BiomeFUN_2025</strong>, which will be used in the second part of this course (Days 3 and 4).
+          The environment includes all the packages and tools you'll need (e.g. COBRApy, Equilibrator, Jupyter Notebook) and is designed to work independently of your existing
+          system setup — so it won’t interfere with your global Python or other environments.
+        </p>
+        <p>
+          Follow the steps below carefully. There is a video with instructions following these same steps in case you want to check it out first.
+          If you run into trouble, don't hesitate to reach out to the instructor or TA.
+        </p>
+
+        <hr>
+
+        <h3>Steps</h3>
+        <ol>
+          <li>Make sure you have Anaconda or Miniconda installed on your computer.</li>
+          <li>
+        Download this environment file:
+          <a href="https://bgmicrobiomes.github.io/biomeFUN_materials/Data/BiomeFUN_2025.zip" download>
+    BiomeFUN_2025.zip</a>
+    <br>
+              Save this file in the folder you will work on for this course and EXTRACT it.</li>
+          <li>Open the Terminal app<br>
+              <ul>
+                <li>For Mac: <code>Cmd + Space</code> → type “Terminal”</li>
+                <li>For Windows: Search “anaconda prompt”</li>
+              </ul>
+          </li>
+          <li>Navigate to the folder where you saved the <code>.yml</code> file. For example, if you saved it in Downloads, run:
+            <pre><code class="language-bash">cd ~/Downloads</code></pre>
+          </li>
+          <li>Create the environment using the <code>.yml</code> file:
+            <pre><code class="language-bash">conda env create -f BiomeFUN_2025.yml</code></pre>
+            If you want to remove the environment, just run:
+            <pre><code class="language-bash">conda env remove --name BiomeFUN_2025</code></pre>
+          </li>
+          <li>Once the installation finishes, activate the new environment:
+            <pre><code class="language-bash">conda activate BiomeFUN_2025</code></pre>
+          </li>
+          <li>(Optional, but recommended) Register the environment so it appears in Jupyter:
+            <pre><code class="language-bash">python -m ipykernel install --user --name BiomeFUN_2025 --display-name "Python (BiomeFUN_2025)"</code></pre>
+          </li>
+          <li>Start Jupyter Notebook:
+            <pre><code class="language-bash">jupyter notebook</code></pre>
+          </li>
+          <li>In Jupyter, click “Kernel” → “Change kernel” and select:<br>
+              <strong>Python (BiomeFUN_2025)</strong>
+          </li>
+        </ol>
+
+        <hr>
+
+        <h3>Notes</h3>
+        <ul>
+          <li>You only need to install the environment <strong>once</strong>.</li>
+          <li>After that, you can activate it anytime with:
+            <pre><code class="language-bash">conda activate BiomeFUN_2025</code></pre>
+          </li>
+          <li>Always run Jupyter from the active environment to ensure the correct packages are available.</li>
+        </ul>
+
+        <p><strong>Happy modeling!</strong></p>
+      </section>
+    </div>
+  </body>
+</html>
