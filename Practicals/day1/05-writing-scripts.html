@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Writing Scripts and Working with Data</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="writing-scripts-and-working-with-data">Writing Scripts and Working with Data</h1>
+<p><strong>questions:</strong></p>
+<ul>
+<li>How can we automate a commonly used set of commands?
+objectives:</li>
+<li>Use the <strong><code>nano</code></strong> text editor to modify text files.</li>
+<li>Write a basic shell script.</li>
+<li>Use the <strong><code>bash</code></strong> command to execute a shell script.</li>
+<li>Use <strong><code>chmod</code></strong> to make a script an executable program.</li>
+</ul>
+<p><strong>keypoints:</strong></p>
+<ul>
+<li>Scripts are a collection of commands executed together.</li>
+<li>Transferring information to and from virtual and local computers.</li>
+</ul>
+<script language="javascript" type="text/javascript">
+function set_page_view_defaults() {
+    document.getElementById('div_win').style.display = 'block';
+    document.getElementById('div_unix').style.display = 'none';
+};
+
+function change_content_by_platform(form_control){
+    if (!form_control || document.getElementById(form_control).value == 'win') {
+        set_page_view_defaults();
+    } else if (document.getElementById(form_control).value == 'unix') {
+        document.getElementById('div_win').style.display = 'none';
+        document.getElementById('div_unix').style.display = 'block';
+    } else {
+        alert("Error: Missing platform value for 'change_content_by_platform()' script!");
+    }
+}
+
+window.onload = set_page_view_defaults;
+</script>
+<h2 id="writing-files">Writing files</h2>
+<p>We've been able to do a lot of work with files that already exist, but what if we want to write our own files? We're not going to type in a FASTA file, but we'll see as we go through other tutorials, there are a lot of reasons we'll want to write a file, or edit an existing file.</p>
+<p>To add text to files, we're going to use a text editor called Nano. We're going to create a file to take notes about what we've been doing with the data files in <strong><code>~/shell_data/untrimmed_fastq</code></strong>.</p>
+<p>This is good practice when working in bioinformatics. We can create a file called <strong><code>README.txt</code></strong> that describes the data files in the directory or documents how the files in that directory were generated.  As the name suggests, it's a file that we or others should read to understand the information in that directory.</p>
+<p>Let's change our working directory to <strong><code>~/shell_data/untrimmed_fastq</code></strong> using <strong><code>cd</code></strong>,
+then run <strong><code>nano</code></strong> to create a file called <strong><code>README.txt</code></strong>:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span> ~/shell_data/untrimmed_fastq
+$ nano README.txt
+</code></pre>
+<p>You should see something like this:</p>
+<p><img src="file:///c:\Users\mvandenbroek\surfdrive - Marcel van den Broek@surfdrive.surf.nl\AC_BiomeFUN2025\presentaties\Marcel\Shell_Workshop\bash\fig\nano201711.png" alt="nano201711.png"></p>
+<p>The text at the bottom of the screen shows the keyboard shortcuts for performing various tasks in <strong><code>nano</code></strong>. We will talk more about how to interpret this information soon.</p>
+<blockquote>
+<h2 id="which-editor">Which Editor?</h2>
+<p>When we say, &quot;<strong><code>nano</code></strong> is a text editor,&quot; we really do mean &quot;text&quot;: it can
+only work with plain character data, not tables, images, or any other
+human-friendly media. We use it in examples because it is one of the
+least complex text editors. However, because of this trait, it may
+not be powerful enough or flexible enough for the work you need to do
+after this workshop. On Unix systems (such as Linux and Mac OS X),
+many programmers use <a href="http://www.gnu.org/software/emacs/">Emacs</a> or
+<a href="http://www.vim.org/">Vim</a> (both of which require more time to learn),
+or a graphical editor such as
+<a href="http://projects.gnome.org/gedit/">Gedit</a>. On Windows, you may wish to
+use <a href="http://notepad-plus-plus.org/">Notepad++</a>.  Windows also has a built-in
+editor called <code>notepad</code> that can be run from the command line in the same
+way as <code>nano</code> for the purposes of this lesson.</p>
+<p>No matter what editor you use, you will need to know where it searches
+for and saves files. If you start it from the shell, it will (probably)
+use your current working directory as its default location. If you use
+your computer's start menu, it may want to save files in your desktop or
+documents directory instead. You can change this by navigating to
+another directory the first time you &quot;Save As...&quot;</p>
+</blockquote>
+<p>Let's type in a few lines of text. Describe what the files in this
+directory are or what you've been doing with them.
+Once we're happy with our text, we can press <strong>Ctrl</strong>-<strong>O</strong> (press the <strong>Ctrl</strong> or <strong>Control</strong> key and, while
+holding it down, press the <strong>O</strong> key) to write our data to disk. You'll be asked what file we want to save this to:
+press <strong>Return</strong> to accept the suggested default of <strong><code>README.txt</code></strong>.</p>
+<p>Once our file is saved, we can use <strong>Ctrl</strong>-<strong>X</strong> to quit the editor and
+return to the shell.</p>
+<blockquote>
+<h2 id="control-ctrl-or--key">Control, Ctrl, or ^ Key</h2>
+<p>The Control key is also called the &quot;Ctrl&quot; key. There are various ways
+in which using the Control key may be described. For example, you may
+see an instruction to press the <strong>Ctrl</strong> key and, while holding it down,
+press the <strong>X</strong> key, described as any of:</p>
+<ul>
+<li><code>Control-X</code></li>
+<li><code>Control+X</code></li>
+<li><code>Ctrl-X</code></li>
+<li><code>Ctrl+X</code></li>
+<li><code>^X</code></li>
+<li><code>C-x</code></li>
+</ul>
+<p>In <strong><code>nano</code></strong>, along the bottom of the screen you'll see <strong><code>^G Get Help ^O WriteOut</code></strong>.
+This means that you can use <strong>Ctrl</strong>-<strong>G</strong> to get help and <strong>Ctrl</strong>-<strong>O</strong> to save your
+file.</p>
+</blockquote>
+<p>Now you've written a file. You can take a look at it with <strong><code>less</code></strong> or <strong><code>cat</code></strong>, or open it up again and edit it with <strong><code>nano</code></strong>.</p>
+<blockquote>
+<h2 id="exercise">Exercise</h2>
+<p>Open <strong><code>README.txt</code></strong> and add the date to the top of the file and save the file.</p>
+<blockquote>
+<h2 id="solution">Solution</h2>
+<p>Use <strong><code>nano README.txt</code></strong> to open the file.<br>
+Add today's date and then use <strong>Ctrl</strong>-<strong>X</strong> followed by <strong><code>y</code></strong> and <strong>Enter</strong> to save.</p>
+</blockquote>
+</blockquote>
+<h2 id="writing-scripts">Writing scripts</h2>
+<p>A really powerful thing about the command line is that you can write scripts. Scripts let you save commands to run them and also lets you put multiple commands together. Though writing scripts may require an additional time investment initially, this can save you time as you run them repeatedly. Scripts can also address the challenge of reproducibility: if you need to repeat an analysis, you retain a record of your command history within the script.</p>
+<p>One thing we will commonly want to do with sequencing results is pull out bad reads and write them to a file to see if we can figure out what's going on with them. We're going to look for reads with long sequences of N's like we did before, but now we're going to write a script, so we can run it each time we get new sequences, rather than type the code in by hand each time.</p>
+<p>We're going to create a new file to put this command in. We'll call it <strong><code>bad-reads-script.sh</code></strong>. The <strong><code>sh</code></strong> isn't required, but using that extension tells us that it's a shell script.</p>
+<pre><code class="language-bash">$ nano bad-reads-script.sh
+</code></pre>
+<p>Bad reads have a lot of N's, so we're going to look for  <strong><code>NNNNNNNNNN</code></strong> with <strong><code>grep</code></strong>. We want the whole FASTQ record, so we're also going to get the one line above the sequence and the two lines below. We also want to look in all the files that end with <strong><code>.fastq</code></strong>, so we're going to use the <strong><code>*</code></strong> wildcard.</p>
+<pre><code class="language-bash">grep -B1 -A2 NNNNNNNNNN *.fastq &gt; scripted_bad_reads.txt
+</code></pre>
+<p>Type your <strong><code>grep</code></strong> command into the file and save it as before. Be careful that you did not add the <strong><code>$</code></strong> at the beginning of the line.</p>
+<p>Now comes the neat part. We can run this script. Type:</p>
+<pre><code class="language-bash">$ bash bad-reads-script.sh
+</code></pre>
+<p>It will look like nothing happened, but now if you look at <strong><code>scripted_bad_reads.txt</code></strong>, you can see that there are now reads in the file.</p>
+<blockquote>
+<h2 id="exercise-1">Exercise</h2>
+<p>We want the script to tell us when it's done.</p>
+<ol>
+<li>Open <strong><code>bad-reads-script.sh</code></strong> and add the line <strong><code>echo &quot;Script finished!&quot;</code></strong> after the <strong><code>grep</code></strong> command and save the file.</li>
+<li>Run the updated script.</li>
+</ol>
+<blockquote>
+<h2 id="solution-1">Solution</h2>
+<pre><code class="language-bash">$ bash bad-reads-script.sh
+Script finished!
+</code></pre>
+</blockquote>
+</blockquote>
+<h2 id="making-the-script-into-a-program">Making the script into a program</h2>
+<p>We had to type <strong><code>bash</code></strong> because we needed to tell the computer what program to use to run this script. Instead, we can turn this script into its own program. We need to tell it that it's a program by making it executable. We can do this by changing the file permissions. We talked about permissions earlier.</p>
+<p>First, let's look at the current permissions.</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span> -l bad-reads-script.sh
+</code></pre>
+<pre><code class="language-output">-rw-rw-r-- 1 user user 81 Oct 25 21:46 bad-reads-script.sh
+</code></pre>
+<p>We see that it says <strong><code>-rw-rw-r--</code></strong>. This shows that the file can be read by any user and written to by the file owner (you) and users that belong to the group called user. We want to change these permissions so that the file can be executed as a program. We use the command <strong><code>chmod</code></strong> like we did earlier when we removed write permissions. Here we are adding <strong>(<code>+</code>)</strong> executable permissions <strong>(<code>+x</code>)</strong>.</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">chmod</span> +x bad-reads-script.sh
+</code></pre>
+<p>Now let's look at the permissions again.</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span> -l bad-reads-script.sh
+</code></pre>
+<pre><code class="language-output">-rwxrwxr-x 1 user user 81 Oct 25 21:46 bad-reads-script.sh
+</code></pre>
+<p>Now we see that it says <strong><code>-rwxrwxr-x</code></strong>. The <strong><code>x</code></strong> 's that are there now tell us we can run it as a program. So, let's try it! We'll need to put <strong><code>./</code></strong> at the beginning so the computer knows to look here in this directory for the program.</p>
+<pre><code class="language-bash">$ ./bad-reads-script.sh
+</code></pre>
+<p>The script should run the same way as before, but now we've created our very own computer program!</p>
+<h2 id="moving-and-downloading-data">Moving and Downloading Data</h2>
+<p>So far, we've worked with data that is pre-loaded on the instance in the cloud. Usually, however,
+most analyses begin with moving data onto the instance. Below we'll show you some commands to
+download data onto your instance, or to move data between your computer and the cloud.</p>
+<h3 id="getting-data-from-the-cloud">Getting data from the cloud</h3>
+<p>There are two programs that will download data from a remote server to your local
+(or remote) machine: <strong><code>wget</code></strong> and <strong><code>curl</code></strong>. They were designed to do slightly different
+tasks by default, so you'll need to give the programs somewhat different options to get
+the same behaviour, but they are mostly interchangeable.</p>
+<ul>
+<li>
+<p><strong><code>wget</code></strong> is short for &quot;world wide web get&quot;, and it's basic function is to <em>download</em>
+web pages or data at a web address.</p>
+</li>
+<li>
+<p><strong><code>cURL</code></strong> is a pun, it is supposed to be read as &quot;see URL&quot;, so its basic function is
+to <em>display</em> webpages or data at a web address.</p>
+</li>
+</ul>
+<p>Which one you need to use mostly depends on your operating system, as most computers will
+only have one or the other installed by default.</p>
+<p>Let's say you want to download some data from Ensembl. We're going to download a very small
+tab-delimited file that just tells us what data is available on the Ensembl bacteria server.
+Before we can start our download, we need to know whether we're using <strong><code>curl</code></strong> or <strong><code>wget</code></strong>.</p>
+<p>To see which program you have, type:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">which</span> curl
+$ <span class="hljs-built_in">which</span> wget
+</code></pre>
+<p><strong><code>which</code></strong> is a BASH program that looks through everything you have
+installed, and tells you what folder it is installed to. If it can't
+find the program you asked for, it returns nothing, i.e. gives you no
+results.</p>
+<p>On Mac OSX, you'll likely get the following output:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">which</span> curl
+</code></pre>
+<pre><code class="language-output">/usr/bin/curl
+</code></pre>
+<pre><code class="language-bash">$ <span class="hljs-built_in">which</span> wget
+</code></pre>
+<pre><code class="language-output">$
+</code></pre>
+<p>This output means that you have <code>curl</code> installed, but not <code>wget</code>.</p>
+<p>Once you know whether you have <code>curl</code> or <code>wget</code>, use one of the
+following commands to download the file:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span>
+$ wget ftp://ftp.ensemblgenomes.org/pub/release-37/bacteria/species_EnsemblBacteria.txt
+</code></pre>
+<p>or</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span>
+$ curl -O ftp://ftp.ensemblgenomes.org/pub/release-37/bacteria/species_EnsemblBacteria.txt
+</code></pre>
+<p>Since we wanted to <em>download</em> the file rather than just view it, we used <code>wget</code> without
+any modifiers. With <code>curl</code> however, we had to use the -O flag, which simultaneously tells <code>curl</code> to
+download the page instead of showing it to us <strong>and</strong> specifies that it should save the
+file using the same name it had on the server: species_EnsemblBacteria.txt</p>
+<p>It's important to note that both <code>curl</code> and <code>wget</code> download to the computer that the
+command line belongs to. So, if you are logged into AWS on the command line and execute
+the <code>curl</code> command above in the AWS terminal, the file will be downloaded to your AWS
+machine, not your local one.</p>
+<h3 id="moving-files-between-your-laptop-and-your-instance">Moving files between your laptop and your instance</h3>
+<p>What if the data you need is on your local computer, but you need to get it <em>into</em> the
+cloud? There are also several ways to do this, but it's <em>always</em> easier
+to start the transfer locally. <strong>This means if you're typing into a terminal, the terminal
+should not be logged into your instance, it should be showing your local computer. If you're
+using a transfer program, it needs to be installed on your local machine, not your instance.</strong></p>
+<h2 id="transferring-data-between-your-local-machine-and-the-cloud">Transferring Data Between your Local Machine and the Cloud</h2>
+<p>These directions are platform specific, so please follow the instructions for your system:</p>
+<p><strong>Please select the platform you wish to use for the exercises: <select id="id_platform" name="platformlist" onchange="change_content_by_platform('id_platform');return false;"><option value="unix" id="id_unix" selected> UNIX </option><option value="win" id="id_win" selected> Windows </option></select></strong></p>
+<div id="div_unix" style="display:block" markdown="1">
+<h3 id="uploading-data-to-your-virtual-machine-with-scp">Uploading Data to your Virtual Machine with scp</h3>
+<p><code>scp</code> stands for 'secure copy protocol', and is a widely used UNIX tool for moving files
+between computers. The simplest way to use <code>scp</code> is to run it in your local terminal,
+and use it to copy a single file:</p>
+<pre><code class="language-bash">scp &lt;file I want to move&gt; &lt;<span class="hljs-built_in">where</span> I want to move it&gt;
+</code></pre>
+<p>Note that you are always running <code>scp</code> locally, but that <em>doesn't</em> mean that
+you can only move files from your local computer. In order to move a file from your local computer to an AWS instance, the command would look like this:</p>
+<pre><code class="language-bash">$ scp &lt;<span class="hljs-built_in">local</span> file&gt; &lt;AWS instance&gt;
+</code></pre>
+<p>To move it back to your local computer, you re-order the <code>to</code> and <code>from</code> fields:</p>
+<pre><code class="language-bash">$ scp &lt;AWS instance&gt; &lt;<span class="hljs-built_in">local</span> file&gt;
+</code></pre>
+<h4 id="uploading-data-to-your-virtual-machine-with-scp-1">Uploading Data to your Virtual Machine with scp</h4>
+<p>Open the terminal and use the <code>scp</code> command to upload a file (e.g. local_file.txt) to the user home directory:</p>
+<pre><code class="language-bash">$  scp local_file.txt user@ip.address:/home/user/
+</code></pre>
+<h4 id="downloading-data-from-your-virtual-machine-with-scp">Downloading Data from your Virtual Machine with scp</h4>
+<p>Let's download a text file from our remote machine. You should have a file that contains bad reads called ~/shell_data/scripted_bad_reads.txt.</p>
+<p><strong>Tip:</strong> If you are looking for another (or any really) text file in your home directory to use instead, try:</p>
+<pre><code class="language-bash">$ find ~/shell_data -name *.txt
+</code></pre>
+<p>Download the bad reads file in ~/shell_data/scripted_bad_reads.txt to your home ~/Download directory using the following command <strong>(make sure you substitute user@ip.address with your remote login credentials)</strong>:</p>
+<pre><code class="language-bash">$ scp user@ip.address:/home/user/shell_data/untrimmed_fastq/scripted_bad_reads.txt ~/Downloads
+</code></pre>
+<p>Remember that in both instances, the command is run from your local machine, we've just flipped the order of the to and from parts of the command.</p>
+</div>
+<div id="div_win" style="display:block" markdown="1">
+<h3 id="uploading-data-to-your-virtual-machine-with-scp-2">Uploading Data to your Virtual Machine with scp</h3>
+<p><code>scp</code> stands for 'secure copy protocol', and is a widely used UNIX tool for moving files
+between computers. The simplest way to use <code>scp</code> is to run it in your local terminal,
+and use it to copy a single file:</p>
+<pre><code class="language-bash">scp &lt;file I want to move&gt; &lt;<span class="hljs-built_in">where</span> I want to move it&gt;
+</code></pre>
+<p>Note that you are always running <code>scp</code> locally, but that <em>doesn't</em> mean that
+you can only move files from your local computer. In order to move a file from your local computer to an AWS instance, the command would look like this:</p>
+<pre><code class="language-bash">$ scp &lt;<span class="hljs-built_in">local</span> file&gt; &lt;AWS instance&gt;
+</code></pre>
+<p>To move it back to your local computer, you re-order the <code>to</code> and <code>from</code> fields:</p>
+<pre><code class="language-bash">$ scp &lt;AWS instance&gt; &lt;<span class="hljs-built_in">local</span> file&gt;
+</code></pre>
+<h4 id="uploading-data-to-your-virtual-machine-with-scp-3">Uploading Data to your Virtual Machine with scp</h4>
+<p>Open the terminal and use the <code>scp</code> command to upload a file (e.g. local_file.txt) to the user home directory:</p>
+<pre><code class="language-bash">$  scp local_file.txt user@ip.address:/home/user/
+</code></pre>
+<h4 id="downloading-data-from-your-virtual-machine-with-scp-1">Downloading Data from your Virtual Machine with scp</h4>
+<p>Let's download a text file from our remote machine. You should have a file that contains bad reads called ~/shell_data/scripted_bad_reads.txt.</p>
+<p><strong>Tip:</strong> If you are looking for another (or any really) text file in your home directory to use instead, try:</p>
+<pre><code class="language-bash">$ find ~/shell_data -name *.txt
+</code></pre>
+<p>Download the bad reads file in ~/shell_data/scripted_bad_reads.txt to your home ~/Download directory using the following command <strong>(make sure you substitute user@ip.address with your remote login credentials)</strong>:</p>
+<pre><code class="language-bash">$ scp user@ip.address:/home/user/shell_data/untrimmed_fastq/scripted_bad_reads.txt ~/Desktop
+</code></pre>
+<p>Or if that doesn't work:</p>
+<pre><code class="language-bash">$ scp user@ip.address:/home/user/shell_data/untrimmed_fastq/scripted_bad_reads.txt /drives/c/Users/&lt;REPLACE-BY-YOUR-USERNAME&gt;/Desktop
+</code></pre>
+<p>Remember that in both instances, the command is run from your local machine, we've just flipped the order of the to and from parts of the command.</p>
+</div>
+<h3 id="updown-loading-data-tofrom-your-virtual-machine-with-filezilla">Up/Down loading Data to/from your Virtual Machine with FileZilla</h3>
+<p>FileZilla does the same as scp but with a graphical user interface, which makes it more user friendly. And is available for Windows, Linux and MacOS.</p>
+<p>Open FileZilla and connect with your Virtual Machine with the following settings:</p>
+<p>Host: sftp://ip.address<br>
+Username: user<br>
+Password: *******  ( Use the password that you used to login on your AWS Cloud instance)</p>
+<p>And click &quot;Quickconnect&quot;.</p>
+<p>Navigate in &quot;Local site&quot; to your Download folder and in the &quot;Remote site: to /home/user/shell_data/untrimmed_fastq. Download the file scripted_bad_reads.txt by selecting the file and do a right-mouse-click on this file. Select &quot;Download&quot; from the menu.</p>
+<p>Thanks for joining!!!</p>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>

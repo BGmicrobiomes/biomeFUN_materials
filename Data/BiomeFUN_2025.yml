@@ -1,4 +1,3 @@
-
 # BiomeFUN_2025: Conda environment for running COBRA and Equilibrator tools during the course
 
 name: BiomeFUN_2025
@@ -15,9 +14,11 @@ dependencies:
   - plotly=5.15.0
   - pip
   - pip:
-      - equilibrator-api==0.4.5.1
-      - equilibrator-cache==0.4.3
-      - equilibrator-pathway==0.4.4
+      - equilibrator-api==0.6.0
+      - equilibrator-pathway==0.6.0
+      - equilibrator-cache==0.6.1
       - kaleido
       - pymupdf
       - cobra==0.29.1
+      - xlrd==2.0.2
+

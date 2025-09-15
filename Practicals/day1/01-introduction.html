@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Introducing the Shell</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="introducing-the-shell">Introducing the Shell</h1>
+<p><strong>questions:</strong></p>
+<ul>
+<li>&quot;What is a command shell and why would I use one?&quot;</li>
+<li>&quot;How can I move around on my computer?&quot;</li>
+<li>&quot;How can I see what files and directories I have?&quot;</li>
+<li>&quot;How can I specify the location of a file or directory on my computer?&quot;</li>
+</ul>
+<p><strong>objectives:</strong></p>
+<ul>
+<li>&quot;Describe key reasons for learning shell.&quot;</li>
+<li>&quot;Navigate your file system using the command line.&quot;</li>
+<li>&quot;Access and read help files for <strong>bash</strong> programs and use help files to identify useful command options.&quot;</li>
+<li>&quot;Demonstrate the use of tab completion, and explain its advantages.&quot;</li>
+</ul>
+<p><strong>keypoints:</strong></p>
+<ul>
+<li>&quot;The shell gives you the ability to work more efficiently by using keyboard commands rather than a GUI.&quot;</li>
+<li>&quot;Useful commands for navigating your file system include: <strong>ls</strong>, <strong>pwd</strong>, and <strong>cd</strong>.&quot;</li>
+<li>&quot;Most commands take options (flags) which begin with a <strong>-</strong>.&quot;</li>
+<li>&quot;Tab completion can reduce errors from mistyping and make work more efficient in the shell.&quot;</li>
+</ul>
+<h2 id="what-is-a-shell-and-why-should-i-care">What is a shell and why should I care?</h2>
+<p>A <em>shell</em> is a computer program that presents a command line interface
+which allows you to control your computer using commands entered
+with a keyboard instead of controlling graphical user interfaces
+(GUIs) with a mouse/keyboard combination.</p>
+<p>There are many reasons to learn about the shell:</p>
+<ul>
+<li>Many bioinformatics tools can only be used through a command line interface, or
+have extra capabilities in the command line version that are not available in the GUI.
+This is true, for example, of BLAST, which offers many advanced functions only accessible
+to users who know how to use a shell.</li>
+<li>The shell makes your work less boring. In bioinformatics you often need to do
+the same set of tasks with a large number of files. Learning the shell will allow you to
+automate those repetitive tasks and leave you free to do more exciting things.</li>
+<li>The shell makes your work less error-prone. When humans do the same thing a hundred different times
+(or even ten times), they're likely to make a mistake. Your computer can do the same thing a thousand times
+with no mistakes.</li>
+<li>The shell makes your work more reproducible. When you carry out your work in the command-line
+(rather than a GUI), your computer keeps a record of every step that you've carried out, which you can use
+to re-do your work when you need to. It also gives you a way to communicate unambiguously what you've done,
+so that others can check your work or apply your process to new data.</li>
+<li>Many bioinformatic tasks require large amounts of computing power and can't realistically be run on your
+own machine. These tasks are best performed using remote computers or cloud computing, which can only be accessed
+through a shell.</li>
+</ul>
+<p>In this lesson you will learn how to use the command line interface to move around in your file system.</p>
+<h2 id="how-to-access-the-shell">How to access the shell</h2>
+<p>On a Mac or Linux machine, you can access a shell through a program called Terminal, which is already available
+on your computer. If you're using Windows, you'll need to download a separate program to access the shell.</p>
+<p>We will spend most of our time learning about the basics of the shell
+by manipulating some experimental data. Some of the data we're going to be working with is quite large, and
+we're also going to be using several bioinformatic packages in later
+lessons to work with this data. To avoid having to spend time
+downloading the data and downloading and installing all of the software,
+we're going to be working with data on a remote server.</p>
+<p>You can log-in to the remote server using the instructions
+<a href="00-logging-onto-cloud.html">here</a>.
+Your instructor will supply the <strong>hostname</strong> that you need to login.</p>
+<p>After logging in, you will see a screen showing something like this:</p>
+<pre><code class="language-output">Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 6.8.0-1027-aws x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Thu Aug 21 12:34:57 UTC 2025
+
+  System load:  0.16               Processes:             109
+  Usage of /:   86.2% of 28.89GB   Users logged in:       0
+  Memory usage: 7%                 IPv4 address for ens5: 10.0.1.94
+  Swap usage:   0%
+
+  =&gt; / is using 86.2% of 28.89GB
+
+Expanded Security Maintenance for Applications is not enabled.
+
+2 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+9 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+*** System restart required ***
+
+Last login: Fri Aug  8 22:34:53 2019 from 3.70.236.93
+</code></pre>
+<p>This provides a lot of information about the remote server that you're logging in to. We're not going to use most of this information for
+our workshop, so you can clear your screen using the <strong>clear</strong> command.</p>
+<pre><code class="language-bash">$ clear
+</code></pre>
+<p>This will scroll your screen down to give you a fresh screen and will make it easier to read.
+You haven't lost any of the information on your screen. If you scroll up, you can see everything that has been output to your screen
+up until this point.</p>
+<h2 id="loading-of-the-conda-environment-and-course-material">Loading of the conda environment and course material</h2>
+<p>All Bioinformatics software that will be used during this course is all ready installed but we need tell the system where they are by activating the environment.</p>
+<pre><code class="language-bash">$ conda activate metagenomics
+</code></pre>
+<h2 id="navigating-your-file-system">Navigating your file system</h2>
+<p>The part of the operating system responsible for managing files and directories
+is called the <strong>file system</strong>.
+It organizes our data into files,
+which hold information,
+and directories (also called &quot;folders&quot;),
+which hold files or other directories.</p>
+<p>Several commands are frequently used to create, inspect, rename, and delete files and directories.</p>
+<blockquote>
+<h2 id="preparation-magic">Preparation Magic</h2>
+<p>If you type the command:
+<strong>PS1='$ '</strong>
+into your shell, followed by pressing the <strong>Enter</strong> key,
+your window should look like our example in this lesson.<br>
+This isn't necessary to follow along (in fact, your prompt may have
+other helpful information you want to know about).  This is up to you!</p>
+</blockquote>
+<pre><code class="language-bash">$
+</code></pre>
+<p>The dollar sign is a <strong>prompt</strong>, which shows us that the shell is waiting for input;
+your shell may use a different character as a prompt and may add information before
+the prompt. When typing commands, either from these lessons or from other sources,
+do not type the prompt, only the commands that follow it.</p>
+<p>Let's find out where we are by running a command called <strong>pwd</strong>
+(which stands for &quot;print working directory&quot;).
+At any moment, our <strong>current working directory</strong>
+is our current default directory,
+i.e.,
+the directory that the computer assumes we want to run commands in,
+unless we explicitly specify something else.
+Here,
+the computer's response is <strong>/home/user</strong>,
+which is the top level directory within our cloud system:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">pwd</span>
+</code></pre>
+<pre><code class="language-output">/home/user
+</code></pre>
+<p>Let's look at how our file system is organized. We can see what files and subdirectories are in this directory by running <strong>ls</strong>,
+which stands for &quot;listing&quot;:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span>
+</code></pre>
+<pre><code class="language-output">Analyses  Support_files  databases  miniforge  shell_data
+</code></pre>
+<p><strong>ls</strong> prints the names of the files and directories in the current directory in
+alphabetical order,
+arranged neatly into columns.
+We'll be working within the <strong>shell_data</strong> subdirectory, and creating new subdirectories, throughout this workshop.</p>
+<p>The command to change locations in our file system is <strong>cd</strong>, followed by a
+directory name to change our working directory.
+<strong>cd</strong> stands for &quot;change directory&quot;.</p>
+<p>Let's say we want to navigate to the <strong>shell_data</strong> directory we saw above.  We can
+use the following command to get there:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span> shell_data
+</code></pre>
+<p>Let's look at what is in this directory:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span>
+</code></pre>
+<pre><code class="language-output">sra_metadata  untrimmed_fastq
+</code></pre>
+<p>We can make the <strong>ls</strong> output more comprehensible by using the <strong>flag</strong> <strong>-F</strong>,
+which tells <strong>ls</strong> to add a trailing <strong>/</strong> to the names of directories:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span> -F
+</code></pre>
+<pre><code class="language-output">sra_metadata/  untrimmed_fastq/
+</code></pre>
+<p>Anything with a &quot;/&quot; after it is a directory. Things with a &quot;*&quot; after them are programs. If
+there are no decorations, it's a file.</p>
+<p><strong>ls</strong> has lots of other options. To find out what they are, we can type:</p>
+<pre><code class="language-bash">$ man <span class="hljs-built_in">ls</span>
+</code></pre>
+<p>Some manual files are very long. You can scroll through the file using
+your keyboard's down arrow or use the <strong>Space</strong> key to go forward one page
+and the <strong>b</strong> key to go backwards one page. When you are done reading, hit <strong>q</strong>
+to quit.</p>
+<blockquote>
+<h2 id="challenge">Challenge</h2>
+<p>Use the <strong>-l</strong> option for the <strong>ls</strong> command to display more information for each item
+in the directory. What is one piece of additional information this long format
+gives you that you don't see with the bare <strong>ls</strong> command?</p>
+<blockquote>
+<h2 id="solution">Solution</h2>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span> -l
+</code></pre>
+<pre><code class="language-output">total 8
+drwxr-x--- 2 user user 4096 Jul 30  2015 sra_metadata
+drwxr-xr-x 2 user user 4096 Nov 15  2017 untrimmed_fastq
+</code></pre>
+<p>The additional information given includes the name of the owner of the file,
+when the file was last modified, and whether the current user has permission
+to read and write to the file.</p>
+</blockquote>
+</blockquote>
+<p>No one can possibly learn all of these arguments, that's what the manual page
+is for. You can (and should) refer to the manual page or other help files
+as needed.</p>
+<p>Let's go into the <strong>untrimmed_fastq</strong> directory and see what is in there.</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span> untrimmed_fastq
+$ <span class="hljs-built_in">ls</span> -F
+</code></pre>
+<pre><code class="language-output">SRR097977.fastq  SRR098026.fastq
+</code></pre>
+<p>This directory contains two files with <strong>.fastq</strong> extensions. FASTQ is a format
+for storing information about sequencing reads and their quality.
+We will be learning more about FASTQ files in a later lesson.</p>
+<h3 id="shortcut-tab-completion">Shortcut: Tab Completion</h3>
+<p>Typing out file or directory names can waste a
+lot of time and it's easy to make typing mistakes. Instead we can use tab complete
+as a shortcut. When you start typing out the name of a directory or file, then
+hit the <strong>Tab</strong> key, the shell will try to fill in the rest of the
+directory or file name.</p>
+<p>Return to your home directory:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span>
+</code></pre>
+<p>then enter:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span> she&lt;tab&gt;
+</code></pre>
+<p>The shell will fill in the rest of the directory name for
+<strong>shell_data</strong>.</p>
+<p>Now change directories to <strong>untrimmed_fastq</strong> in <strong>shell_data</strong></p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span> shell_data
+$ <span class="hljs-built_in">cd</span> untrimmed_fastq
+</code></pre>
+<p>Using tab complete can be very helpful. However, it will only autocomplete
+a file or directory name if you've typed enough characters to provide
+a unique identifier for the file or directory you are trying to access.</p>
+<p>If we navigate back to our <strong>untrimmed_fastq</strong> directory and try to access one
+of our sample files:</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">cd</span>
+$ <span class="hljs-built_in">cd</span> shell_data
+$ <span class="hljs-built_in">cd</span> untrimmed_fastq
+$ <span class="hljs-built_in">ls</span> SR&lt;tab&gt;
+</code></pre>
+<p>The shell auto-completes your command to <strong>SRR09</strong>, because all file names in
+the directory begin with this prefix. When you hit
+<strong>Tab</strong> again, the shell will list the possible choices.</p>
+<pre><code class="language-bash">$ <span class="hljs-built_in">ls</span> SRR09&lt;tab&gt;&lt;tab&gt;
+</code></pre>
+<pre><code class="language-output">SRR097977.fastq  SRR098026.fastq
+</code></pre>
+<p>Tab completion can also fill in the names of programs, which can be useful if you
+remember the beginning of a program name.</p>
+<pre><code class="language-bash">$ pw&lt;tab&gt;&lt;tab&gt;
+</code></pre>
+<pre><code class="language-output">pwck      pwconv    pwd       pwdx      pwunconv
+</code></pre>
+<p>Displays the name of every program that starts with <strong>pw</strong>.</p>
+<h2 id="summary">Summary</h2>
+<p>We now know how to move around our file system using the command line.
+This gives us an advantage over interacting with the file system through
+a GUI as it allows us to work on a remote server, carry out the same set of operations
+on a large number of files quickly, and opens up many opportunities for using
+bioinformatic software that is only available in command line versions.</p>
+<p>In the next few episodes, we'll be expanding on these skills and seeing how
+using the command line shell enables us to make our workflow more efficient and reproducible.</p>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>

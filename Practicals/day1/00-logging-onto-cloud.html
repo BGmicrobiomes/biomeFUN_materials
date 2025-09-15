@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Logging onto Cloud</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="logging-onto-cloud">Logging onto Cloud</h1>
+<p><strong>questions:</strong></p>
+<ul>
+<li>How do I connect to the Amazon cloud instance?</li>
+</ul>
+<p><strong>objectives:</strong></p>
+<ul>
+<li>Log onto to a running instance</li>
+<li>Log off from a running instance</li>
+</ul>
+<p><strong>keypoints:</strong></p>
+<ul>
+<li>You will use provided credentials for all instances</li>
+<li>Logging off an instance is not the same as turning off an instance</li>
+</ul>
+<script language="javascript" type="text/javascript">
+function set_page_view_defaults() {
+    document.getElementById('div_aws_win').style.display = 'block';
+    document.getElementById('div_aws_unix').style.display = 'none';
+};
+
+function change_content_by_platform(form_control){
+    if (!form_control || document.getElementById(form_control).value == 'aws_win') {
+        set_page_view_defaults();
+    } else if (document.getElementById(form_control).value == 'aws_unix') {
+        document.getElementById('div_aws_win').style.display = 'none';
+        document.getElementById('div_aws_unix').style.display = 'block';
+        document.getElementById('div_hpc').style.display = 'none';
+        document.getElementById('div_cyverse').style.display = 'none';
+    } else {
+        alert("Error: Missing platform value for 'change_content_by_platform()' script!");
+    }
+}
+
+window.onload = set_page_view_defaults;
+</script>
+<h2 id="important-note">Important Note</h2>
+<p>This lesson covers how to log into, and out of, an already running Amazon cloud instance.</p>
+<h2 id="background-to-aws">Background to AWS</h2>
+<p>Setting up a new AWS instance requires a credit card and an AWS account. To save time, your instructor launched a remote computer (instance) for you prior to the workshop, and connected it to our lesson data.</p>
+<p>To access the pre-configured workshop data, you’ll need to use our log-in credentials (user name and password). These credentials will be supplied by your instructor.</p>
+<p>But first, you need a place to log into! To find the instance that’s attached to that data, you’ll need something called an IP address. Your instructor should have given this to you at the beginning of the workshop.</p>
+<p>An IP address is essentially the numerical version of a web address like <a href="https://www.amazon.com">www.amazon.com</a></p>
+<p>Recall that cloud computing is about choice. You can rent just a single processor on a large computer for a small project, or you can rent hundreds of processors spread across multiple computers for a large project. In either case, once you rent the collection of processors, Amazon will present your rental to you as if it was a single computer. So, the physical computers that host your instances don’t really move, but every time you launch a new instance, it will have a new IP address.</p>
+<h2 id="connection-protocols">Connection Protocols</h2>
+<p>We will use a protocol called Secure Shell (SSH) that, as the name implies, provides you
+with a secure way to use a shell. In our case,
+the shell will be running on a remote machine. This protocol is available for every
+operating system, but sometimes requires additional software.</p>
+<h2 id="logging-onto-a-cloud-instance">Logging onto a cloud instance</h2>
+<p><strong>Please select the platform you wish to use for the exercises: <select id="id_platform" name="platformlist" onchange="change_content_by_platform('id_platform');return false;"><option value="aws_unix" id="id_aws_unix" selected> AWS_UNIX </option><option value="aws_win" id="id_aws_win" selected> AWS_Windows </option></select></strong></p>
+<div id="div_aws_win" style="display:block" markdown="1">
+<h4 id="connecting-using-pc">Connecting using PC</h4>
+<p><em>Prerequisites</em>: You must have an SSH client. There are several free options but you should have installed <a href="https://mobaxterm.mobatek.net/download-home-edition.html">MobaXterm</a> at the begining of the workshop, and we're going to continue using that.</p>
+<ol>
+<li>
+<p>Open MobaXterm</p>
+</li>
+<li>
+<p>Click &quot;Start local terminal” in the middle of the MobaXterm screen</p>
+<p><img src="file:///c:\Users\mvandenbroek\surfdrive - Marcel van den Broek@surfdrive.surf.nl\AC_BiomeFUN2025\presentaties\Marcel\Shell_Workshop\bash\fig\mobaXterm_screenshot_1.png" alt=""></p>
+</li>
+<li>
+<p>Type the following command substituting ip_address by the IP address your instructor will provide:</p>
+<p><img src="file:///c:\Users\mvandenbroek\surfdrive - Marcel van den Broek@surfdrive.surf.nl\AC_BiomeFUN2025\presentaties\Marcel\Shell_Workshop\bash\fig\mobaXterm_screenshot_2.png" alt=""></p>
+<p><em>Be sure to pay attention to capitalization and spaces</em></p>
+</li>
+<li>
+<p>You will receive a security message that looks something like the message below:</p>
+<pre><code class="language-text">The authenticity of host &#x27;3.70.236.93 (3.70.236.93)&#x27; can&#x27;t be established.
+ECDSA key fingerprint is 1c:24:7c:8b:3c:f9:34:d5:25:02:8a:a6:1b:11:ea:5a.
+Are you sure you want to continue connecting (yes/no)?
+</code></pre>
+</li>
+<li>
+<p>Type <code>yes</code> to proceed</p>
+</li>
+<li>
+<p>In the final step, you will be asked to provide a password</p>
+<p><strong>Note:</strong> When typing your password, it is common in Unix/Linux not see any asterisks (e.g. <code>****</code>) or moving cursors. Just continue typing.</p>
+</li>
+</ol>
+<p>You should now be connected!</p>
+</div>
+<div id="div_aws_unix" style="display:block" markdown="1">
+<h4 id="connecting-using-maclinux">Connecting using Mac/Linux</h4>
+<p>Mac and Linux operating systems will already have terminals installed.</p>
+<ol>
+<li>
+<p>Open the terminal</p>
+<p>Simply search for 'Terminal' and/or look for the terminal icon</p>
+<p><img src="file:///c:\Users\mvandenbroek\surfdrive - Marcel van den Broek@surfdrive.surf.nl\AC_BiomeFUN2025\presentaties\Marcel\Shell_Workshop\bash\fig\terminal.png" alt="terminal icon"></p>
+</li>
+<li>
+<p>Type the following command substituting ip_address by the IP address your instructor will provide:</p>
+<pre><code class="language-bash">$ ssh user@ip_address
+</code></pre>
+<p><em>Be sure to pay attention to capitalization and spaces</em></p>
+</li>
+<li>
+<p>You will receive a security message that looks something like the message below</p>
+<pre><code class="language-text">The authenticity of host &#x27;3.70.236.93 (3.70.236.93)&#x27; can&#x27;t be established.
+ECDSA key fingerprint is 1c:24:7c:8b:3c:f9:34:d5:25:02:8a:a6:1b:11:ea:5a.
+Are you sure you want to continue connecting (yes/no)?
+</code></pre>
+</li>
+<li>
+<p>Type <code>yes</code> to proceed</p>
+</li>
+<li>
+<p>In the final step, you will be asked to provide a login and password</p>
+<p><strong>Note:</strong> When typing your password, it is common in Unix/Linux not see any asterisks (e.g. <code>****</code>) or moving cursors. Just continue typing.</p>
+</li>
+</ol>
+<p>You should now be connected!</p>
+</div>
+<h2 id="logging-off-a-cloud-instance">Logging off a cloud instance</h2>
+<p>Logging off your instance is a lot like logging out of your local computer: it stops any processes
+that are currently running, but doesn't shut the computer off.</p>
+<p>To log off the AWS instance, type <code>exit</code>. This will close the connection, and your terminal will go back to showing your local computer.:</p>
+<pre><code class="language-bash">user@3.70.236.93:~$ <span class="hljs-built_in">exit</span>
+<span class="hljs-built_in">logout</span>
+Connection to 3.70.236.93 closed.
+-bash-4.1$
+</code></pre>
+<h2 id="logging-back-in">Logging back in</h2>
+<p>Internet connections can be slow or unstable. If you're just browsing the internet, that means you have reload pages, or wait for pictures to load. When you're working in cloud, that means you'll sometimes be suddenly disconnected from your instance when you weren't expecting it. Even on the best internet connections, your signal will occasionally drop, so it's good to know the above SSH steps, and be able to log into the cloud environment without looking up the instructions each time.</p>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>
